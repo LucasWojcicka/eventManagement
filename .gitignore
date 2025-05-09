@@ -5,3 +5,4 @@ __pycache__/
 assets/external/
 *.db
 .venv
+/.idea/*

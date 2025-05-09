@@ -1,2 +1,5 @@
-
 reflex==0.7.6
+Faker==37.1.0
+SQLAlchemy~=2.0.40
+alembic~=1.15.2
+sqlmodel~=0.0.24

@@ -1,5 +1,7 @@
 import reflex as rx
 from rxconfig import config
+from eventManagement.models import User, Attendee, Organiser, Event
+
 
 class State(rx.State):
     """The app state."""
@@ -13,13 +15,14 @@ def index() -> rx.Component:
         rx.color_mode.button(position="top-right"),
         rx.vstack(
             rx.heading("Event Management Application TEST!", size="9"),
-            rx.text("Welcome",size="5"),
+            rx.text("Welcome", size="5"),
             rx.link(rx.button("login", size="4"), href="/form"),
             spacing="5",
             justify="center",
             min_height="85vh",
         ),
     )
+
 
 class FormState(rx.State):
     form_data: dict = {}
@@ -63,8 +66,10 @@ def form_example():
                 ),
             ),
         ),
-    )    
+    )
+
 
 app = rx.App()
+# TODO seed stuff
 app.add_page(index)
 app.add_page(form_example, route="/form")
