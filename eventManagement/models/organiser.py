@@ -10,8 +10,12 @@ from eventManagement.models.user import User
 
 
 class Organiser(rx.Model, table=True):
-    user: "User" = Relationship(
-    )
+    user_id : int = Field(default=None, foreign_key="user.id")
 
-    organised_events: Optional[list["Event"]] = Relationship(
-    )
+    # user: "User" = Relationship(
+    #     back_populates="organiser"
+    # )
+    #
+    # organised_events: Optional[list["Event"]] = Relationship(
+    #     back_populates="organiser"
+    # )

@@ -10,8 +10,11 @@ from eventManagement.models.user import User
 
 
 class Attendee(rx.Model, table=True):
+    user_id: int = Field(default=None, foreign_key="user.id")
+
     user: "User" = Relationship(
     )
-
-    attending_events: Optional[list["Event"]] = Relationship(
-    )
+    #
+    # attending_events: Optional[list["Event"]] = Relationship(
+    #     back_populates="attendees"
+    # )

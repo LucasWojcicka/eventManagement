@@ -4,12 +4,15 @@ from datetime import datetime
 from enum import Enum
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 
+# from eventManagement.models.organiser import Organiser
+# from eventManagement.models.attendee import Attendee
+
 
 class EventType(Enum):
     CONCERT = "concert"
     CONFERENCE = "conference"
     NETWORKING = "networking"
-    EXHBITION = "exhibition"
+    EXHIBITION = "exhibition"
 
 
 class EventStatus(Enum):
@@ -53,3 +56,6 @@ class Event(rx.Model, table=True):
     status: EventStatus
     capacity: int
     occupied_capacity: int
+    
+    # organiser: Optional["Organiser"] = Relationship(back_populates="organised_events")
+    # attendees: Optional[list["Attendee"]] = Relationship(back_populates="attending_events")
