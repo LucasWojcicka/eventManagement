@@ -1,12 +1,26 @@
 import reflex as rx
+
+import eventManagement
 from rxconfig import config
 from eventManagement.models import User, Attendee, Organiser, Event
+
+from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer
 
 
 class State(rx.State):
     """The app state."""
 
     ...
+
+
+fastapi_app = FastAPI(title="My API")
+
+
+# Add routes to the FastAPI app
+@fastapi_app.get("/api/items")
+async def get_items():
+    return "meow"
 
 
 def index() -> rx.Component:
@@ -69,7 +83,14 @@ def form_example():
     )
 
 
-app = rx.App()
+# app = rx.App()
+app = rx.App(api_transformer=fastapi_app)
+app.add_all_routes_endpoint()
 # TODO seed stuff
 app.add_page(index)
+
 app.add_page(form_example, route="/form")
+
+from eventManagement.models.seed_data import seed_users
+
+seed_users()
