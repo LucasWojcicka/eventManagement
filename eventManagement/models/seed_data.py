@@ -58,7 +58,7 @@ def disperse_users_into_roles():
         session.exec(sqlalchemy.text("DELETE FROM Organiser"))
         # session.exec(sqlalchemy.text("VACUUM"))
         session.commit()
-        users = session.query(User).all()  # or use execute/text if needed
+        users = session.query(User).all()
         for i, user in enumerate(users):
             print(f"User {i} -> DB ID: {user.id}")
 
@@ -78,47 +78,15 @@ def disperse_users_into_roles():
                 session.add(organiser)
 
         session.commit()
-    # with rx.session() as session:
-    #     # users = session.query(User).all()  # Get all users
-    #     # result = session.execute(text('SELECT * FROM User'))
-    #     # for user in result:
-    #     #     print(user)
-    #     result = session.execute(text('SELECT COUNT(*) FROM User'))
-    #     # WHAT V
-    #     count = result.scalar()
-    #     print("$$$$$$$ " + str(count) + " $$$$$$$")
-    #     for x in range(count):
-    #         # user = session.query(User).filter(User.id == x).first()
-    #         # result = session.execute(
-    #         #     text("SELECT * FROM User WHERE id = :id"),
-    #         #     {"id": x}
-    #         # )
-    #         print("*****")
-    #         print(x)
-    #         print("*****")
-    #         # user = result.first()
-    #         # print(user)
-    #         if x <= 35:
-    #             print("just attendee")
-    #             attendee = Attendee(
-    #                 user_id=x)
-    #             session.add(attendee)
-    #         elif x > 35 and x <= 45:
-    #             print("both")
-    #             attendee = Attendee(
-    #                 user_id=x)
-    #             session.add(attendee)
-    #
-    #             organiser = Organiser(
-    #                 user_id=x)
-    #             session.add(organiser)
-    #         else:
-    #             print("organiser")
-    #             organiser = Organiser(
-    #                 user_id=x)
-    #             session.add(organiser)
-    #     session.commit()
-
 
 def seed_events():
     print("events")
+    for x in range(25):
+        with rx.session() as session:
+            session.exec(sqlalchemy.text("DELETE FROM Event"))
+            session.exec(sqlalchemy.text("DELETE FROM Perks"))
+            session.exec(sqlalchemy.text("DELETE FROM Registration"))
+            session.commit()
+
+
+
