@@ -23,6 +23,14 @@ async def get_items():
     return "meow"
 
 
+@fastapi_app.get("/api/users")
+async def get_users():
+    from eventManagement.services.user_services import UserServices
+    load_users = UserServices.LoadUsers()
+    load_users.load_all_users()
+    return load_users.users
+
+
 def index() -> rx.Component:
     # Welcome Page (Index)
     return rx.container(
@@ -94,6 +102,7 @@ app.add_page(form_example, route="/form")
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
+
 #
 seed_users()
 disperse_users_into_roles()
