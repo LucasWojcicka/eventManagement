@@ -92,5 +92,7 @@ app.add_page(index)
 app.add_page(form_example, route="/form")
 
 from eventManagement.models.seed_data import seed_users
+from eventManagement.models.seed_data import disperse_users_into_roles
 
 seed_users()
+disperse_users_into_roles()
