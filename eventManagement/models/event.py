@@ -27,6 +27,7 @@ class EventStatus(Enum):
 
 
 class Event(rx.Model, table=True):
+    id: int = Field(primary_key=True)
     name: str
     duration: int
     event_type: EventType
@@ -36,23 +37,25 @@ class Event(rx.Model, table=True):
     price_range_highest: int
     description: str
     age_range: str
-    event_id: int
     attendees_num: int = 0
     status: EventStatus
     capacity: int
     occupied_capacity: int
 
 
-class Perks(rx.Model, table=True):
+class Perk(rx.Model, table=True):
     name: str
     price: int
     description: str
     age_range: str
     duration: int
     available_slots: int
-    event_id: Optional[int] = Field(
+    event_id: int = Field(
         default=None,
         foreign_key="event.id"
+    )
+
+    event: "Event" = Relationship(
     )
 
 
@@ -62,9 +65,12 @@ class Registration(rx.Model, table=True):
     description: str
     price: int
     approved: bool
-    event_id: Optional[int] = Field(
+    event_id: int = Field(
         default=None,
         foreign_key="event.id"
+    )
+
+    event: "Event" = Relationship(
     )
 
 # class Perks(rx.Model, table=True):

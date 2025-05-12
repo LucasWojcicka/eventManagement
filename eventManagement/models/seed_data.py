@@ -1,5 +1,5 @@
 import datetime
-
+import random
 import reflex as rx
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -8,7 +8,7 @@ from sqlmodel import Session
 from faker import Faker
 
 from eventManagement.models.user import User
-from eventManagement.models.event import Event
+from eventManagement.models.event import Event, EventType, EventStatus
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
 
@@ -79,14 +79,34 @@ def disperse_users_into_roles():
 
         session.commit()
 
+
 def seed_events():
     print("events")
-    for x in range(25):
-        with rx.session() as session:
-            session.exec(sqlalchemy.text("DELETE FROM Event"))
-            session.exec(sqlalchemy.text("DELETE FROM Perks"))
-            session.exec(sqlalchemy.text("DELETE FROM Registration"))
-            session.commit()
+    with rx.session() as session:
+        session.exec(sqlalchemy.text("DELETE FROM Event"))
+        session.exec(sqlalchemy.text("DELETE FROM Perk"))
+        session.exec(sqlalchemy.text("DELETE FROM Registration"))
+        session.commit()
+        fake = Faker()
 
+        # for x in range(25):
 
+        print("bacon bacon bacon")
 
+        random_event_type = random.choice(list(EventType))
+        new_event = Event(name=fake.word(),
+                          duration=0,
+                          event_type=EventType.CONCERT,
+                          date=fake.future_datetime(fake.date_this_year()),
+                          location=str(fake.country()),
+                          price_range_lowest=1,
+                          price_range_highest=10,
+                          description=fake.paragraph(1),
+                          age_range="1",
+                          attendees_num=1,
+                          status=EventStatus.NORMAL,
+                          capacity=1,
+                          occupied_capacity=1
+                          )
+        session.add(new_event)
+        session.commit()
