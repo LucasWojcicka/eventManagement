@@ -12,6 +12,7 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 from sqlmodel import Field, Relationship
 from typing import Optional, List
 
+
 # from eventManagement.models.attendee import Attendee
 
 
@@ -45,7 +46,8 @@ class Event(rx.Model, table=True):
     id: int = Field(primary_key=True)
     name: str
     duration: int
-    event_type: EventType
+    # event_type: EventType
+    event_type: str
     date: datetime
     location: str
     price_range_lowest: int
@@ -53,7 +55,8 @@ class Event(rx.Model, table=True):
     description: str
     age_range: str
     attendees_num: int = 0
-    status: EventStatus
+    # status: EventStatus
+    status: str
     capacity: int
     occupied_capacity: int
 
@@ -63,15 +66,13 @@ class Event(rx.Model, table=True):
     # )
 
 
-
-
 # import datetime
 # from typing import List, Optional, TYPE_CHECKING
 #
 # import reflex as rx
 # from sqlmodel import Field, Relationship, SQLModel
 
-from eventManagement.models.AttendeeEventLink import AttendeeEventLink
+from eventManagement.models.attendee_event_link import AttendeeEventLink
 
 
 # if TYPE_CHECKING:

@@ -1,6 +1,5 @@
 import reflex as rx
-import datetime
-
+from datetime import datetime
 from eventManagement.models.event import EventType, EventStatus, Event
 # from eventManagement.models.user import User
 from typing import Optional, List
@@ -46,11 +45,11 @@ class EventServices(rx.State):
 
     # works V
     class LoadEvents():
-        users: list[Event]
+        events: list[Event]
 
-        def load_all_users(self):
+        def load_all_events(self):
             with rx.session() as session:
-                self.users = session.exec(Event.select()).all()
+                self.events = session.exec(Event.select()).all()
 
     class ChangeName(rx.State):
         id: int
@@ -67,3 +66,162 @@ class EventServices(rx.State):
                 Event.username = self.username
                 session.add(event)
                 session.commit()
+
+    class ChangeDuration(rx.State):
+        id: int
+        duration: str
+
+        @rx.event
+        def change_duration(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.duration = self.duration
+                session.add(event)
+                session.commit()
+
+    class ChangeDate(rx.State):
+        id: int
+        date: datetime
+
+        @rx.event
+        def change_date(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.date = self.date
+                session.add(event)
+                session.commit()
+
+    class ChangeLocation(rx.State):
+        id: int
+        location: str
+
+        @rx.event
+        def change_location(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.location = self.location
+                session.add(event)
+                session.commit()
+
+    class ChangePriceRangeLowest(rx.State):
+        id: int
+        price_range_lowest: int
+
+        @rx.event
+        def change_price_range_lowest(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.price_range_lowest = self.price_range_lowest
+                session.add(event)
+                session.commit()
+
+    class ChangePriceRangeHighest(rx.State):
+        id: int
+        price_range_highest: int
+
+        @rx.event
+        def change_price_range_highest(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.price_range_highest = self.price_range_highest
+                session.add(event)
+                session.commit()
+
+    class ChangeDescription(rx.State):
+        id: int
+        description: str
+
+        @rx.event
+        def change_description(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.description = self.description
+                session.add(event)
+                session.commit()
+
+    class ChangeAgeRange(rx.State):
+        id: int
+        age_range: str
+
+        @rx.event
+        def change_age_range(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.age_range = self.age_range
+                session.add(event)
+                session.commit()
+
+    class ChangeAttendeesNum(rx.State):
+        id: int
+        attendeesNum: int
+
+        @rx.event
+        def change_attendees_num(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.attendees_num = self.attendeesNum
+                Event.occupied_capacity = Event.occupied_capacity + self.attendeesNum
+                session.add(event)
+                session.commit()
+
+    class NewAttendee(rx.State):
+        id: int
+        attendee: int
+
+        @rx.event
+        def new_attendee(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+                Event.attendees_num = self.attendee
+                Event.occupied_capacity = Event.occupied_capacity + 1
+                session.add(event)
+                session.commit()
+
+    class GetEmptyCapacity():
+        id: int
+        empty_capacity: int
+
+        def get_remaining_capacity_count(self):
+            with rx.session() as session:
+                event = session.exec(
+                    Event.select().where(
+                        (Event.id == self.id)
+                    )
+                ).first()
+            self.empty_capacity = event.capacity - event.occupied_capacity

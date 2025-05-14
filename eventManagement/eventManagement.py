@@ -30,6 +30,13 @@ async def get_users():
     load_users.load_all_users()
     return load_users.users
 
+@fastapi_app.get("/api/events")
+async def get_events():
+    from eventManagement.services.eventServices import EventServices
+    load_events = EventServices.LoadEvents()
+    load_events.load_all_events()
+    return load_events.events
+
 
 def index() -> rx.Component:
     # Welcome Page (Index)
@@ -102,8 +109,10 @@ app.add_page(form_example, route="/form")
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
+from eventManagement.models.seed_data import seed_one_attendee
 
 #
-seed_users()
-disperse_users_into_roles()
-seed_events()
+# seed_users()
+# disperse_users_into_roles()
+# seed_events()
+seed_one_attendee()

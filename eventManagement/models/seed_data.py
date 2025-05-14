@@ -89,7 +89,7 @@ def get_random_event_type():
     max = len(EventType.list())
     random.seed = datetime.time
     random_index = random.randrange(0, max)
-    return event_type_list[random_index]
+    return event_type_list[random_index].value
 
 
 def get_random_event_status():
@@ -99,7 +99,7 @@ def get_random_event_status():
     max = len(EventStatus.list())
     random.seed = datetime.time
     random_index = random.randrange(0, max)
-    return event_status_list[random_index]
+    return event_status_list[random_index].value
 
 
 def seed_events():
@@ -132,4 +132,12 @@ def seed_events():
                           occupied_capacity=1
                           )
         session.add(new_event)
+        session.commit()
+
+
+def seed_one_attendee():
+    with rx.session() as session:
+        one_attendee = session.exec(Attendee.select()).first()
+        one_event = session.exec(Event.select()).first()
+        one_attendee.events.append(one_event)
         session.commit()
