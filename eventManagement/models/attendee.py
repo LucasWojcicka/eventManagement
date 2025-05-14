@@ -1,23 +1,14 @@
-import datetime
-from typing import List, Optional
+
 
 import reflex as rx
-from sqlmodel import Field
-from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
+from sqlmodel import Field, Relationship
 
 from eventManagement.models.event import Event
-from eventManagement.models.user import User
 
 
 class Attendee(rx.Model, table=True):
-    # user_id: int = Field(default=None, foreign_key="user.id")
     user_id: int = Field(default=None, foreign_key="user.id")
+    # events: list[Event] = rx.Model.list_field(Event, link_model=True)
 
-    user: "User" = Relationship(
-    )
+    user: "User" = Relationship()
 
-
-    #
-    # attending_events: Optional[list["Event"]] = Relationship(
-    #     back_populates="attendees"
-    # )

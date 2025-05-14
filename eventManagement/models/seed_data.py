@@ -1,5 +1,7 @@
 import datetime
 import random
+import time
+
 import reflex as rx
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -80,7 +82,29 @@ def disperse_users_into_roles():
         session.commit()
 
 
+def get_random_event_type():
+    print("Bacon bacon bacon")
+    print(len(EventType.list()))
+    event_type_list = EventType.list()
+    max = len(EventType.list())
+    random.seed = datetime.time
+    random_index = random.randrange(0, max)
+    return event_type_list[random_index]
+
+
+def get_random_event_status():
+    print("Bacon bacon bacon")
+    print(len(EventType.list()))
+    event_status_list = EventStatus.list()
+    max = len(EventStatus.list())
+    random.seed = datetime.time
+    random_index = random.randrange(0, max)
+    return event_status_list[random_index]
+
+
 def seed_events():
+    seeded_event_type = get_random_event_type()
+    seeded_event_status = get_random_event_status()
     print("events")
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Event"))
@@ -93,18 +117,17 @@ def seed_events():
 
         print("bacon bacon bacon")
 
-        random_event_type = random.choice(list(EventType))
-        new_event = Event(name=fake.word(),
+        new_event = Event(name=str(fake.word()),
                           duration=0,
-                          event_type=EventType.CONCERT,
+                          event_type=seeded_event_type,
                           date=fake.future_datetime(fake.date_this_year()),
-                          location=str(fake.country()),
+                          location=str(fake.address()),
                           price_range_lowest=1,
                           price_range_highest=10,
                           description=fake.paragraph(1),
                           age_range="1",
                           attendees_num=1,
-                          status=EventStatus.NORMAL,
+                          status=seeded_event_status,
                           capacity=1,
                           occupied_capacity=1
                           )

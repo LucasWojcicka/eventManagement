@@ -2,7 +2,7 @@ import reflex as rx
 
 import eventManagement
 from rxconfig import config
-from eventManagement.models import User, Attendee, Organiser, Event
+# from eventManagement.models import User, Attendee, Organiser, Event
 
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
