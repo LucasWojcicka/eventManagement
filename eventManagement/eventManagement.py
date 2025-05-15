@@ -30,6 +30,7 @@ async def get_users():
     load_users.load_all_users()
     return load_users.users
 
+
 @fastapi_app.get("/api/events")
 async def get_events():
     from eventManagement.services.eventServices import EventServices

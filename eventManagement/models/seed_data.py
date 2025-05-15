@@ -146,8 +146,10 @@ def seed_events():
 
 
 def seed_one_attendee():
+
     with rx.session() as session:
         one_attendee = session.exec(Attendee.select()).first()
         one_event = session.exec(Event.select()).first()
         one_attendee.events.append(one_event)
         session.commit()
+
