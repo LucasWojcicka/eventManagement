@@ -38,22 +38,6 @@ async def get_events():
     load_events.load_all_events()
     return load_events.events
 
-
-def index() -> rx.Component:
-    # Welcome Page (Index)
-    return rx.container(
-        rx.color_mode.button(position="top-right"),
-        rx.vstack(
-            rx.heading("Event Management Application TEST!", size="9"),
-            rx.text("Welcome", size="5"),
-            rx.link(rx.button("login", size="4"), href="/form"),
-            spacing="5",
-            justify="center",
-            min_height="85vh",
-        ),
-    )
-
-
 class FormState(rx.State):
     form_data: dict = {}
 
@@ -62,12 +46,59 @@ class FormState(rx.State):
         """Handle the form submit."""
         self.form_data = formData
 
-
-def form_example():
+def index() -> rx.Component:
+    # Welcome Page (Index)
     return rx.container(
         rx.color_mode.button(position="top-right"),
+        rx.vstack(
+            rx.heading("Event Management Application TEST!", size="9"),
+            rx.text("Welcome", size="5"),
+            rx.link(rx.button("login", size="4"), href="/login"),
+            spacing="5",
+            justify="center",
+            min_height="85vh",
+        ),
+    )
+
+def login():
+    return rx.container(
+        header(),
         rx.container(
             rx.heading("Login Page", size="6", align="center")
+        ),
+        rx.container(
+            rx.vstack(
+                rx.form(
+                    rx.vstack(
+                        rx.input(
+                            placeholder="User Name",
+                            name="userName",
+                        ),
+                        rx.input(
+                            placeholder="Email Address",
+                            name="emailAddress",
+                        ),
+                        rx.button("Submit", type="submit"),
+                        align="center",
+                    ),
+                    on_submit=FormState.handleSubmit,
+                    reset_on_submit=True,
+                ),
+            ),
+        ),
+    )
+
+def aboutUs():
+    return rx.container(
+        header(),
+        rx.text("about us", size = "5"),
+    )
+
+def createAccount():
+        return rx.container(
+        header(),
+        rx.container(
+            rx.heading("Create Account", size="6", align="center")
         ),
         rx.container(
             rx.vstack(
@@ -82,11 +113,16 @@ def form_example():
                             name="lastName",
                         ),
                         rx.input(
+                            placeholder="User Name",
+                            name="userName",
+                        ),
+                        rx.input(
                             placeholder="Email Address",
                             name="emailAddress",
                         ),
                         rx.hstack(
-                            rx.checkbox("I agree to the Terms and Conditions", name="check"),
+                            rx.checkbox("I agree to the", name="check"),
+                            rx.link("Terms and Conditions", href="/about", size = "2")
                         ),
                         rx.button("Submit", type="submit"),
                         align="center",
@@ -98,22 +134,34 @@ def form_example():
         ),
     )
 
+def header():
+    return rx.flex(
+        rx.card(rx.link("home", href = "/")),
+        rx.card(rx.link("login", href = "/login")),
+        rx.card(rx.link("create account", href = "/createAccount")),
+        rx.card(rx.link("about", href = "/about")),
+        rx.color_mode.button(position="top-right"),
+        spacing="2",
+        width="100%",
+        justify="center",
+    )
 
 # app = rx.App()
 app = rx.App(api_transformer=fastapi_app)
 app.add_all_routes_endpoint()
 # TODO seed stuff
-app.add_page(index)
 
-app.add_page(form_example, route="/form")
+app.add_page(index)
+app.add_page(login, route="/login")
+app.add_page(aboutUs, route="/about")
+app.add_page(createAccount, route="/createAccount")
 
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
 
-#
-seed_users()
-disperse_users_into_roles()
-seed_events()
-seed_one_attendee()
+# seed_users()
+# disperse_users_into_roles()
+# seed_events()
+# seed_one_attendee()
