@@ -12,7 +12,8 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 from sqlmodel import Field, Relationship
 from typing import Optional, List
 
-from eventManagement.models.event_links import EventTiers
+# from eventManagement.models.event_links import EventTiers, EventRegistrations
+# from eventManagement.models.event_links import EventTiers
 
 
 # from eventManagement.models.attendee import Attendee
@@ -63,6 +64,7 @@ class Registration(rx.Model, table=True):
     description: str
     price: int
     approved: bool
+    # approved: bool | None
     event_id: int = Field(
         default=None,
         foreign_key="event.id"
@@ -89,7 +91,8 @@ class Event(rx.Model, table=True):
     status: str
     capacity: int
     occupied_capacity: int
-    registrations: list[Registration] = Relationship(link_model=EventTiers)
+    # perks: list[Perk] = Relationship(link_model=EventTiers)
+    # registrations: list[Registration] = Relationship(link_model=EventRegistrations)
 
     # attendees: List["Attendee"] = Relationship(
     #     back_populates="events",

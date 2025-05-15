@@ -2,7 +2,7 @@ import reflex as rx
 from datetime import datetime
 
 from eventManagement.models.attendee import Attendee
-from eventManagement.models.event import EventType, EventStatus, Event
+from eventManagement.models.event import EventType, EventStatus, Event, Registration
 # from eventManagement.models.user import User
 from typing import Optional, List
 
@@ -245,3 +245,32 @@ class EventServices(rx.State):
                 this_event = EventServices.GetEvent.get_event_by_id(id)
                 attendees = Attendee.query.where(Attendee.events.contains(this_event)).all()
                 return attendees
+
+    class GetEventRegistrations():
+        id: int
+        registrations: list[Registration]
+
+        def get_registrations(self):
+            with rx.session() as session:
+                registrations = Registration.query.where(Registration.event_id == self.id).all()
+                return registrations
+
+    class GetApprovedEventRegistrations():
+        id: int
+        approved_registrations: list[Registration]
+
+        def get_approved_registrations(self):
+            with rx.session() as session:
+                registrations = EventServices.GetEventRegistrations.get_registrations(id)
+                approved_registrations = registrations.query.where(Registration.approved == True).all()
+                return approved_registrations
+
+    class GetDisapprovedEventRegistrations():
+        id: int
+        approved_registrations: list[Registration]
+
+        def get_disapproved_registrations(self):
+            with rx.session() as session:
+                registrations = EventServices.GetEventRegistrations.get_registrations(id)
+                approved_registrations = registrations.query.where(Registration.approved != True).all()
+                return approved_registrations
