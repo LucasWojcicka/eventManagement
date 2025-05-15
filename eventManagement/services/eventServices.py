@@ -1,5 +1,7 @@
 import reflex as rx
 from datetime import datetime
+
+from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import EventType, EventStatus, Event
 # from eventManagement.models.user import User
 from typing import Optional, List
@@ -50,6 +52,14 @@ class EventServices(rx.State):
         def load_all_events(self):
             with rx.session() as session:
                 self.events = session.exec(Event.select()).all()
+
+    class GetEvent():
+        id: int
+        event: Event
+
+        def get_event_by_id(self):
+            with rx.session() as session:
+                self.event = session.exec(Event.select().where(Event.id == self.id)).first()
 
     class ChangeName(rx.State):
         id: int
@@ -225,3 +235,13 @@ class EventServices(rx.State):
                     )
                 ).first()
             self.empty_capacity = event.capacity - event.occupied_capacity
+
+    class GetAttenders():
+        id: int
+        attenders: list[Attendee]
+
+        def get_attenders(self):
+            with rx.session() as session:
+                this_event = EventServices.GetEvent.get_event_by_id(id)
+                attendees = Attendee.query.where(Attendee.events.contains(this_event)).all()
+                return attendees

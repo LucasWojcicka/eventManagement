@@ -1,6 +1,5 @@
-import datetime
+from datetime import datetime
 import random
-import time
 
 import reflex as rx
 import sqlalchemy
@@ -103,8 +102,6 @@ def get_random_event_status():
 
 
 def seed_events():
-    seeded_event_type = get_random_event_type()
-    seeded_event_status = get_random_event_status()
     print("events")
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Event"))
@@ -113,25 +110,38 @@ def seed_events():
         session.commit()
         fake = Faker()
 
-        # for x in range(25):
+        for x in range(25):
+            random.seed = datetime.time
+            seeded_event_type = get_random_event_type()
+            seeded_event_status = get_random_event_status()
+            price_range_lower = random.randrange(10, 500, 10)
+            price_range_higher = random.randrange((price_range_lower + 100), ((price_range_lower + 100) * 2), 10)
+            age_range_lower = random.randrange(0, 75, 5)
+            age_range_higher = random.randrange(age_range_lower, 75, 5)
+            seeded_capacity = random.randrange(100, 30000, 100)
+            seeded_duration = random.randrange(1, 6, 1)
+            seeded_date = fake.date_this_year(after_today=True)
+            seeded_time = fake.time_object()
+            make_date = datetime(seeded_date.year, seeded_date.month, seeded_date.day, seeded_time.hour,
+                                 seeded_time.minute, seeded_time.second)
+            print("*(&#$#$(*&@#$)(O#I@$)(@#$#@$I&)@#")
 
-        print("bacon bacon bacon")
-
-        new_event = Event(name=str(fake.word()),
-                          duration=0,
-                          event_type=seeded_event_type,
-                          date=fake.future_datetime(fake.date_this_year()),
-                          location=str(fake.address()),
-                          price_range_lowest=1,
-                          price_range_highest=10,
-                          description=fake.paragraph(1),
-                          age_range="1",
-                          attendees_num=1,
-                          status=seeded_event_status,
-                          capacity=1,
-                          occupied_capacity=1
-                          )
-        session.add(new_event)
+            new_event = Event(name=str(fake.word()),
+                              duration=seeded_duration,
+                              event_type=seeded_event_type,
+                              date=make_date,
+                              location=str(fake.address()),
+                              price_range_lowest=price_range_lower,
+                              price_range_highest=price_range_higher,
+                              description=fake.paragraph(1),
+                              age_range=str(age_range_lower) + " to " + str(age_range_higher),
+                              attendees_num=0,
+                              # status=seeded_event_status,
+                              status=EventStatus.NORMAL.value,
+                              capacity=seeded_capacity,
+                              occupied_capacity=0
+                              )
+            session.add(new_event)
         session.commit()
 
 

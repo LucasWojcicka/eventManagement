@@ -112,7 +112,7 @@ from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
 
 #
-# seed_users()
-# disperse_users_into_roles()
-# seed_events()
+seed_users()
+disperse_users_into_roles()
+seed_events()
 seed_one_attendee()

@@ -12,6 +12,8 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 from sqlmodel import Field, Relationship
 from typing import Optional, List
 
+from eventManagement.models.event_links import EventTiers
+
 
 # from eventManagement.models.attendee import Attendee
 
@@ -37,11 +39,39 @@ class EventStatus(Enum):
         return list(map(lambda t: t, EventStatus))
 
 
-# class AttendeeEventLink(SQLModel, table=True):
-#     attendee_id: int = Field(foreign_key="attendee.user_id", primary_key=True)
-#     event_id: int = Field(foreign_key="event.id", primary_key=True)
-#
-#
+class Perk(rx.Model, table=True):
+    id: int = Field(primary_key=True)
+    name: str
+    price: int
+    description: str
+    age_range: str
+    duration: int
+    available_slots: int
+    event_id: int = Field(
+        default=None,
+        foreign_key="event.id"
+    )
+
+    event: "Event" = Relationship(
+    )
+
+
+class Registration(rx.Model, table=True):
+    id: int = Field(primary_key=True)
+    registration_type: str
+    registration_type_perks: Optional[str]
+    description: str
+    price: int
+    approved: bool
+    event_id: int = Field(
+        default=None,
+        foreign_key="event.id"
+    )
+
+    event: "Event" = Relationship(
+    )
+
+
 class Event(rx.Model, table=True):
     id: int = Field(primary_key=True)
     name: str
@@ -59,6 +89,7 @@ class Event(rx.Model, table=True):
     status: str
     capacity: int
     occupied_capacity: int
+    registrations: list[Registration] = Relationship(link_model=EventTiers)
 
     # attendees: List["Attendee"] = Relationship(
     #     back_populates="events",
@@ -73,7 +104,6 @@ class Event(rx.Model, table=True):
 # from sqlmodel import Field, Relationship, SQLModel
 
 from eventManagement.models.attendee_event_link import AttendeeEventLink
-
 
 # if TYPE_CHECKING:
 #     from eventManagement.models.attendee import Attendee
@@ -100,36 +130,6 @@ from eventManagement.models.attendee_event_link import AttendeeEventLink
 #     link_model=AttendeeEventLink
 # )
 
-
-class Perk(rx.Model, table=True):
-    name: str
-    price: int
-    description: str
-    age_range: str
-    duration: int
-    available_slots: int
-    event_id: int = Field(
-        default=None,
-        foreign_key="event.id"
-    )
-
-    event: "Event" = Relationship(
-    )
-
-
-class Registration(rx.Model, table=True):
-    registration_type: str
-    registration_type_perks: Optional[str]
-    description: str
-    price: int
-    approved: bool
-    event_id: int = Field(
-        default=None,
-        foreign_key="event.id"
-    )
-
-    event: "Event" = Relationship(
-    )
 
 # class Perks(rx.Model, table=True):
 #     name: str
