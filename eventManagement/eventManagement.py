@@ -1,10 +1,42 @@
 import reflex as rx
+
+import eventManagement
 from rxconfig import config
+# from eventManagement.models import User, Attendee, Organiser, Event
+
+from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer
+
 
 class State(rx.State):
     """The app state."""
 
     ...
+
+
+fastapi_app = FastAPI(title="My API")
+
+
+# Add routes to the FastAPI app
+@fastapi_app.get("/api/items")
+async def get_items():
+    return "meow"
+
+
+@fastapi_app.get("/api/users")
+async def get_users():
+    from eventManagement.services.user_services import UserServices
+    load_users = UserServices.LoadUsers()
+    load_users.load_all_users()
+    return load_users.users
+
+
+@fastapi_app.get("/api/events")
+async def get_events():
+    from eventManagement.services.eventServices import EventServices
+    load_events = EventServices.LoadEvents()
+    load_events.load_all_events()
+    return load_events.events
 
 
 def index() -> rx.Component:
@@ -13,13 +45,14 @@ def index() -> rx.Component:
         rx.color_mode.button(position="top-right"),
         rx.vstack(
             rx.heading("Event Management Application TEST!", size="9"),
-            rx.text("Welcome",size="5"),
+            rx.text("Welcome", size="5"),
             rx.link(rx.button("login", size="4"), href="/form"),
             spacing="5",
             justify="center",
             min_height="85vh",
         ),
     )
+
 
 class FormState(rx.State):
     form_data: dict = {}
@@ -63,8 +96,24 @@ def form_example():
                 ),
             ),
         ),
-    )    
+    )
 
-app = rx.App()
+
+# app = rx.App()
+app = rx.App(api_transformer=fastapi_app)
+app.add_all_routes_endpoint()
+# TODO seed stuff
 app.add_page(index)
+
 app.add_page(form_example, route="/form")
+
+from eventManagement.models.seed_data import seed_users
+from eventManagement.models.seed_data import disperse_users_into_roles
+from eventManagement.models.seed_data import seed_events
+from eventManagement.models.seed_data import seed_one_attendee
+
+#
+seed_users()
+disperse_users_into_roles()
+seed_events()
+seed_one_attendee()
