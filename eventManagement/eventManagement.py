@@ -64,7 +64,7 @@ def login():
     return rx.container(
         header(),
         rx.container(
-            rx.heading("Login Page", size="6", align="center")
+            rx.heading("Login", size="6", align="center")
         ),
         rx.container(
             rx.vstack(
@@ -134,12 +134,25 @@ def createAccount():
         ),
     )
 
+def dashboard():
+    return rx.container(
+        header(),
+        rx.container(
+            rx.grid(rx.foreach(rx.Var.range(12),lambda i: rx.card(f"Card {i + 1}", height="10vh"),),
+                columns="3",
+                spacing="4",
+                width="100%",
+            )
+        )   
+    )
+
 def header():
     return rx.flex(
         rx.card(rx.link("home", href = "/")),
         rx.card(rx.link("login", href = "/login")),
         rx.card(rx.link("create account", href = "/createAccount")),
         rx.card(rx.link("about", href = "/about")),
+        rx.card(rx.link("dashboard", href = "/dashboard")),
         rx.color_mode.button(position="top-right"),
         spacing="2",
         width="100%",
@@ -152,6 +165,7 @@ app.add_all_routes_endpoint()
 # TODO seed stuff
 
 app.add_page(index)
+app.add_page(dashboard, route="/dashboard")
 app.add_page(login, route="/login")
 app.add_page(aboutUs, route="/about")
 app.add_page(createAccount, route="/createAccount")
