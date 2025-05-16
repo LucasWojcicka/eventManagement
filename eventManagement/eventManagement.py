@@ -7,7 +7,6 @@ from rxconfig import config
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
-
 class State(rx.State):
     """The app state."""
 
@@ -53,7 +52,7 @@ def index() -> rx.Component:
         rx.vstack(
             rx.heading("Event Management Application TEST!", size="9"),
             rx.text("Welcome", size="5"),
-            rx.link(rx.button("login", size="4"), href="/login"),
+            rx.link(rx.button("dashboard", size="4"), href="/dashboard"),
             spacing="5",
             justify="center",
             min_height="85vh",
@@ -146,18 +145,100 @@ def dashboard():
         )   
     )
 
-def header():
-    return rx.flex(
-        rx.card(rx.link("home", href = "/")),
-        rx.card(rx.link("login", href = "/login")),
-        rx.card(rx.link("create account", href = "/createAccount")),
-        rx.card(rx.link("about", href = "/about")),
-        rx.card(rx.link("dashboard", href = "/dashboard")),
-        rx.color_mode.button(position="top-right"),
-        spacing="2",
-        width="100%",
-        justify="center",
+def navbar_link(text: str, url: str) -> rx.Component:
+    return rx.link(
+        rx.text(text, size="4", weight="medium"), href=url
     )
+
+def header() -> rx.Component:
+    return rx.box(
+        rx.desktop_only(
+            rx.hstack(
+                rx.hstack(
+                    rx.image(
+                        src="/logo.jpg",
+                        width="2.25em",
+                        height="auto",
+                        border_radius="25%",
+                    ),
+                    rx.heading(
+                        "Zen Planner", size="7", weight="bold"
+                    ),
+                    align_items="center",
+                ),
+                rx.hstack(
+                    navbar_link("Home", "/"),
+                    navbar_link("About", "/about"),
+                    navbar_link("Dashboard", "/dashboard"),
+                    spacing="4",
+                    align_items="center"
+                ),
+                rx.hstack(
+                    rx.button(
+                        "Sign Up",
+                        size="3",
+                        variant="outline",
+                    ),
+                    rx.dialog.root(
+                        rx.dialog.trigger(rx.button("Log in", size="3")),
+                        rx.dialog.content(
+                            rx.dialog.title("Log in"),
+                            rx.dialog.description(
+                            "log in stuff",
+                            ),
+                            rx.dialog.close(
+                                rx.button("Close", size="3"),
+                            ),
+                        ),
+                    ),
+                ),
+                spacing="4",
+                justify="between",
+            ),
+            justify="between",
+            align_items="center",
+        ),
+        rx.mobile_and_tablet(
+            rx.hstack(
+                rx.hstack(
+                    rx.image(
+                        src="/logo.jpg",
+                        width="2em",
+                        height="auto",
+                        border_radius="25%",
+                    ),
+                    rx.heading(
+                        "Reflex", size="6", weight="bold"
+                    ),
+                    align_items="center",
+                ),
+                rx.menu.root(
+                    rx.menu.trigger(
+                        rx.icon("menu", size=30)
+                    ),
+                    rx.menu.content(
+                        rx.menu.item("Home"),
+                        rx.menu.item("About"),
+                        rx.menu.item("Dashboard"),
+                        rx.menu.separator(),
+                        rx.menu.item("Log in"),
+                        rx.menu.item("Sign up"),
+                    ),
+                    justify="end",
+                ),
+                justify="between",
+                align_items="center",
+            ),
+        ),
+        bg=rx.color("accent", 3),
+        padding="1em",
+        # position="fixed",
+        # top="0px",
+        # z_index="5",
+        width="100%",
+    )
+
+
 
 # app = rx.App()
 app = rx.App(api_transformer=fastapi_app)
