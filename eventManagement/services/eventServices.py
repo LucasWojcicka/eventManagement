@@ -5,13 +5,16 @@ from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import EventType, EventStatus, Event, Registration
 # from eventManagement.models.user import User
 from typing import Optional, List
+from typing import Annotated
+
+from fastapi import FastAPI, Path
 
 
 class EventServices(rx.State):
     class AddEvent(rx.State):
         name: str
         duration: int
-        event_type: EventType
+        event_type: str
         date: datetime
         location: str
         price_range_lowest: int
@@ -19,7 +22,7 @@ class EventServices(rx.State):
         description: str
         age_range: str
         attendees_num: int
-        status: EventStatus
+        status: str
         capacity: int
         occupied_capacity: int
 
@@ -45,6 +48,11 @@ class EventServices(rx.State):
                 )
                 session.commit()
 
+    @staticmethod
+    def get_event_by_id_static(event_id: int) -> Event | None:
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.id == event_id)).first()
+
     # works V
     class LoadEvents():
         events: list[Event]
@@ -54,12 +62,17 @@ class EventServices(rx.State):
                 self.events = session.exec(Event.select()).all()
 
     class GetEvent():
-        id: int
-        event: Event
+        given_id: int
+        event_found: Event
 
+        # @rx.event
         def get_event_by_id(self):
             with rx.session() as session:
-                self.event = session.exec(Event.select().where(Event.id == self.id)).first()
+                # self.given_id = 1
+                event = session.exec(
+                    Event.select().where(Event.id == self.given_id)
+                ).first()
+                self.event_found = event
 
     class ChangeName(rx.State):
         id: int

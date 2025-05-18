@@ -1,4 +1,5 @@
 import reflex as rx
+import sqlalchemy
 
 import eventManagement
 from rxconfig import config
@@ -38,6 +39,31 @@ async def get_events():
     load_events.load_all_events()
     return load_events.events
 
+
+@fastapi_app.get("/api/login_user")
+async def login_user(username, password):
+    from eventManagement.services.user_services import UserServices
+    login_user_def = UserServices.LogInUser
+    login_user_def.log_in_user()
+    # load_events = EventServices.LoadEvents()
+    # load_events.load_all_events()
+    return login_user_def.good_login_data
+
+
+@fastapi_app.get("/api/get_event")
+async def get_event(given_id):
+    from eventManagement.services.eventServices import EventServices
+    get_event_def = EventServices.GetEvent()
+    get_event_def.get_event_by_id()
+    return get_event_def.event_found
+
+@fastapi_app.get("/api/get_event_static")
+async def get_event(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    event = EventServices.get_event_by_id_static(event_id)
+    # if not event:
+    #     raise HTTPException(404, "Event not found")
+    return event
 
 def index() -> rx.Component:
     # Welcome Page (Index)

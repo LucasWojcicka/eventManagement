@@ -128,7 +128,8 @@ def seed_events():
 
             new_event = Event(name=str(fake.word()),
                               duration=seeded_duration,
-                              event_type=seeded_event_type,
+                              # event_type=seeded_event_type,
+                              event_type="seed",
                               date=make_date,
                               location=str(fake.address()),
                               price_range_lowest=price_range_lower,
