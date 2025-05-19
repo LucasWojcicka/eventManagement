@@ -35,35 +35,52 @@ async def get_users():
 @fastapi_app.get("/api/events")
 async def get_events():
     from eventManagement.services.eventServices import EventServices
-    load_events = EventServices.LoadEvents()
-    load_events.load_all_events()
-    return load_events.events
-
-
-@fastapi_app.get("/api/login_user")
-async def login_user(username, password):
-    from eventManagement.services.user_services import UserServices
-    login_user_def = UserServices.LogInUser
-    login_user_def.log_in_user()
+    all_events = EventServices.get_all_events()
     # load_events = EventServices.LoadEvents()
     # load_events.load_all_events()
-    return login_user_def.good_login_data
+    return all_events
 
 
-@fastapi_app.get("/api/get_event")
-async def get_event(given_id):
-    from eventManagement.services.eventServices import EventServices
-    get_event_def = EventServices.GetEvent()
-    get_event_def.get_event_by_id()
-    return get_event_def.event_found
+# @fastapi_app.get("/api/login_user")
+# async def login_user(username, password):
+#     from eventManagement.services.user_services import UserServices
+#     login_user_def = UserServices.LogInUser
+#     login_user_def.log_in_user()
+#     # load_events = EventServices.LoadEvents()
+#     # load_events.load_all_events()
+#     return login_user_def.good_login_data
 
-@fastapi_app.get("/api/get_event_static")
+
+# @fastapi_app.get("/api/get_event")
+# async def get_event(given_id):
+#     from eventManagement.services.eventServices import EventServices
+#     get_event_def = EventServices.GetEvent()
+#     get_event_def.get_event_by_id()
+#     return get_event_def.event_found
+
+
+@fastapi_app.get("/api/get_event_by_id")
 async def get_event(event_id: int):
     from eventManagement.services.eventServices import EventServices
-    event = EventServices.get_event_by_id_static(event_id)
-    # if not event:
-    #     raise HTTPException(404, "Event not found")
+    event = EventServices.get_event_by_id(event_id)
     return event
+
+
+@fastapi_app.get("/api/get_attendee_events")
+async def get_attended_events(attendee_id: int):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.get_attending_events(attendee_id)
+    return attendee
+    # return events
+
+
+@fastapi_app.get("/api/set_event_name")
+async def get_attended_events(event_id: int, event_name: str):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.set_event_name(event_id, event_name)
+    return attendee
+    # return events
+
 
 def index() -> rx.Component:
     # Welcome Page (Index)
