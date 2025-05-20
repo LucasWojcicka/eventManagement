@@ -1,6 +1,8 @@
 import reflex as rx
 from datetime import datetime
 
+# from sqlmodel import col
+
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import EventType, EventStatus, Event, Registration
 # from eventManagement.models.user import User
@@ -61,13 +63,37 @@ class EventServices(rx.State):
             return session.exec(Event.select().where(Event.id == event_id)).first()
 
     @staticmethod
-    def get_attending_events(attendee_id: int):
-        print("get attending events")
-
+    def get_attenders(event_id: int):
+        print("get attenders of event")
         with rx.session() as session:
-            attendee = session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
-            attending_events = attendee.events
-            return attending_events
+            all_attendees = session.exec(Attendee.select()).all()
+            attenders = [
+                attendee.id for attendee in all_attendees
+                if any(event.id == event_id for event in attendee.events)
+            ]
+        return attenders
+
+    @staticmethod
+    def get_event_by_name(name: str):
+        pattern = f"%{name}%"
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.name.like(pattern))).all()
+
+    @staticmethod
+    def get_event_by_date(date: datetime):
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.date == date)).all()
+
+    # unsure VVVVVV
+    @staticmethod
+    def get_event_by_between_dates(start_date: datetime, end_date: datetime):
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.date >= start_date and Event.date <= end_date)).all()
+
+    # get by location
+    # get by status
+    # get by type
+    # sort ...
 
     # setters
     @staticmethod

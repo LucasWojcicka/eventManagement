@@ -8,6 +8,16 @@ from typing import Optional, List
 
 
 class UserServices(rx.State):
+
+    @staticmethod
+    def get_attending_events(attendee_id: int):
+        print("get attending events")
+
+        with rx.session() as session:
+            attendee = session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
+            attending_events = attendee.events
+            return attending_events
+
     class AddUser(rx.State):
         name: str
         email: str

@@ -8,6 +8,7 @@ from rxconfig import config
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
+
 class State(rx.State):
     """The app state."""
 
@@ -80,6 +81,20 @@ async def get_attended_events(event_id: int, event_name: str):
     return attendee
     # return events
 
+
+@fastapi_app.get("/api/get_attenders_of_event")
+async def get_attenders(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.get_attenders(event_id)
+    return attendee
+
+
+@fastapi_app.get("/api/get_event_by_name")
+async def get_event_by_name(name: str):
+    from eventManagement.services.eventServices import EventServices
+    return EventServices.get_event_by_name(name)
+
+
 class FormState(rx.State):
     form_data: dict = {}
 
@@ -87,6 +102,7 @@ class FormState(rx.State):
     def handleSubmit(self, formData: dict):
         """Handle the form submit."""
         self.form_data = formData
+
 
 def index() -> rx.Component:
     # Welcome Page (Index)
@@ -101,6 +117,7 @@ def index() -> rx.Component:
             min_height="85vh",
         ),
     )
+
 
 def login():
     return rx.container(
@@ -130,14 +147,16 @@ def login():
         ),
     )
 
+
 def aboutUs():
     return rx.container(
         header(),
-        rx.text("about us", size = "5"),
+        rx.text("about us", size="5"),
     )
 
+
 def createAccount():
-        return rx.container(
+    return rx.container(
         header(),
         rx.container(
             rx.heading("Create Account", size="6", align="center")
@@ -164,7 +183,7 @@ def createAccount():
                         ),
                         rx.hstack(
                             rx.checkbox("I agree to the", name="check"),
-                            rx.link("Terms and Conditions", href="/about", size = "2")
+                            rx.link("Terms and Conditions", href="/about", size="2")
                         ),
                         rx.button("Submit", type="submit"),
                         align="center",
@@ -176,22 +195,25 @@ def createAccount():
         ),
     )
 
+
 def dashboard():
     return rx.container(
         header(),
         rx.container(
-            rx.grid(rx.foreach(rx.Var.range(12),lambda i: rx.card(f"Card {i + 1}", height="10vh"),),
-                columns="3",
-                spacing="4",
-                width="100%",
-            )
-        )   
+            rx.grid(rx.foreach(rx.Var.range(12), lambda i: rx.card(f"Card {i + 1}", height="10vh"), ),
+                    columns="3",
+                    spacing="4",
+                    width="100%",
+                    )
+        )
     )
+
 
 def navbar_link(text: str, url: str) -> rx.Component:
     return rx.link(
         rx.text(text, size="4", weight="medium"), href=url
     )
+
 
 def header() -> rx.Component:
     return rx.box(
@@ -227,7 +249,7 @@ def header() -> rx.Component:
                         rx.dialog.content(
                             rx.dialog.title("Log in"),
                             rx.dialog.description(
-                            "log in stuff",
+                                "log in stuff",
                             ),
                             rx.dialog.close(
                                 rx.button("Close", size="3"),
@@ -280,7 +302,6 @@ def header() -> rx.Component:
         # z_index="5",
         width="100%",
     )
-
 
 
 # app = rx.App()
