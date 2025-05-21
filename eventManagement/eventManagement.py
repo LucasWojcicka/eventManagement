@@ -40,11 +40,11 @@ class FormState(rx.State):
 
     @rx.event
     def handleSubmit(self, formData: dict):
-        """Handle the form submit."""
+        # Handle the form submit.
         self.form_data = formData
 
 def index() -> rx.Component:
-    # Welcome Page (Index)
+    # Index page
     return rx.container(
         rx.color_mode.button(position="top-right"),
         rx.vstack(
@@ -167,11 +167,11 @@ def loginDialog():
                     rx.vstack(
                         rx.input(
                             placeholder="User Name",
-                            name="userName",
+                            name="user_name",
                         ),
                         rx.input(
                             placeholder="Password",
-                            name="passWord",
+                            name="pass_word",
                         ),
                         rx.button("Submit", type="submit"),
                         align="center",
@@ -195,23 +195,23 @@ def createAccountDialog():
                     rx.vstack(
                         rx.input(
                             placeholder="First Name",
-                            name="firstName",
+                            name="first_name",
                         ),
                         rx.input(
                             placeholder="Last Name",
-                            name="lastName",
+                            name="last_name",
                         ),
                         rx.input(
                             placeholder="User Name",
-                            name="userName",
+                            name="user_name",
                         ),
                         rx.input(
                             placeholder="Password",
-                            name="passWord",
+                            name="pass_word",
                         ),
                         rx.input(
                             placeholder="Email Address",
-                            name="emailAddress",
+                            name="email_address",
                         ),
                         rx.hstack(
                             rx.checkbox("I agree to the", name="check"),
