@@ -1,5 +1,9 @@
 import reflex as rx
 
+from eventManagement.models.seed_data import seed_users
+from eventManagement.models.seed_data import disperse_users_into_roles
+from eventManagement.models.seed_data import seed_events
+from eventManagement.models.seed_data import seed_one_attendee
 from rxconfig import config
 # from eventManagement.models import User, Attendee, Organiser, Event
 from fastapi import FastAPI, Depends
@@ -29,13 +33,33 @@ async def get_events():
     load_events.load_all_events()
     return load_events.events
 
-class FormState(rx.State):
+class LoginLogic(rx.State):
     form_data: dict = {}
+    logged_in = False
 
     @rx.event
     def handleSubmit(self, formData: dict):
         # Handle the form submit.
         self.form_data = formData
+        """Returned handshake is confirmed
+        if login successful do"""
+        self.logged_in = True
+
+    def logged_in(self):
+        if self.logged_in == False:
+            rx.hstack(
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
+                    createAccountDialog()
+                ),
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Login", size="3")),
+                    loginDialog()
+                ),
+            ),
+        else:
+            rx.avatar(src="/logo.jpg", fallback="LW", size="1"),
+
 
 def index() -> rx.Component:
     # Index page
@@ -115,38 +139,6 @@ def header() -> rx.Component:
             justify="between",
             align_items="center",
         ),
-        rx.mobile_and_tablet(
-            rx.hstack(
-                rx.hstack(
-                    rx.image(
-                        src="/logo.jpg",
-                        width="2em",
-                        height="auto",
-                        border_radius="25%",
-                    ),
-                    rx.heading(
-                        "Reflex", size="6", weight="bold"
-                    ),
-                    align_items="center",
-                ),
-                rx.menu.root(
-                    rx.menu.trigger(
-                        rx.icon("menu", size=30)
-                    ),
-                    rx.menu.content(
-                        rx.menu.item("Home"),
-                        rx.menu.item("About"),
-                        rx.menu.item("Dashboard"),
-                        rx.menu.separator(),
-                        rx.menu.item("Login"),
-                        rx.menu.item("Create Account"),
-                    ),
-                    justify="end",
-                ),
-                justify="between",
-                align_items="center",
-            ),
-        ),
         bg=rx.color("accent", 3),
         padding="1em",
         width="100%",
@@ -171,7 +163,7 @@ def loginDialog():
                         rx.button("Submit", type="submit"),
                         align="center",
                     ),
-                    on_submit=FormState.handleSubmit,
+                    on_submit=LoginLogic.handleSubmit,
                     reset_on_submit=True,
                 ),
             ),
@@ -211,12 +203,16 @@ def createAccountDialog():
                         ),
                         rx.hstack(
                             rx.checkbox("I agree to the", name="check"),
-                            rx.link("Terms and Conditions", href="/about", size = "2")
+                            rx.link(
+                                "Terms and Conditions",
+                                href="/about",
+                                size="2",
+                                is_external=True)
                         ),
                         rx.button("Submit", type="submit"),
                         align="center",
                     ),
-                    on_submit=FormState.handleSubmit,
+                    on_submit=LoginLogic.handleSubmit,
                     reset_on_submit=True,
                 ),
             ),
@@ -227,7 +223,6 @@ def createAccountDialog():
     ),
 
 
-# app = rx.App()
 app = rx.App(api_transformer=fastapi_app)
 app.add_all_routes_endpoint()
 # TODO seed stuff
@@ -235,11 +230,6 @@ app.add_all_routes_endpoint()
 app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
-
-from eventManagement.models.seed_data import seed_users
-from eventManagement.models.seed_data import disperse_users_into_roles
-from eventManagement.models.seed_data import seed_events
-from eventManagement.models.seed_data import seed_one_attendee
 
 # seed_users()
 # disperse_users_into_roles()
