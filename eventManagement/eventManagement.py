@@ -7,18 +7,13 @@ from fastapi.security import OAuth2PasswordBearer
 
 class State(rx.State):
     """The app state."""
-
     ...
 
-
 fastapi_app = FastAPI(title="My API")
-
-
 # Add routes to the FastAPI app
 @fastapi_app.get("/api/items")
 async def get_items():
     return "meow"
-
 
 @fastapi_app.get("/api/users")
 async def get_users():
@@ -26,7 +21,6 @@ async def get_users():
     load_users = UserServices.LoadUsers()
     load_users.load_all_users()
     return load_users.users
-
 
 @fastapi_app.get("/api/events")
 async def get_events():
@@ -171,6 +165,7 @@ def loginDialog():
                         ),
                         rx.input(
                             placeholder="Password",
+                            type="password",
                             name="pass_word",
                         ),
                         rx.button("Submit", type="submit"),
@@ -207,6 +202,7 @@ def createAccountDialog():
                         ),
                         rx.input(
                             placeholder="Password",
+                            type="password",
                             name="pass_word",
                         ),
                         rx.input(
