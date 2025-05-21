@@ -58,7 +58,7 @@ def index() -> rx.Component:
         ),
     )
 
-logged_in = True
+logged_in = False
 def login_logic():
     if logged_in == False:
         return rx.hstack(
