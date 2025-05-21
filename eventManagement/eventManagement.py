@@ -1,9 +1,7 @@
 import reflex as rx
 
-import eventManagement
 from rxconfig import config
 # from eventManagement.models import User, Attendee, Organiser, Event
-
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
@@ -99,38 +97,6 @@ def createAccount():
         rx.container(
             rx.heading("Create Account", size="6", align="center")
         ),
-        rx.container(
-            rx.vstack(
-                rx.form(
-                    rx.vstack(
-                        rx.input(
-                            placeholder="First Name",
-                            name="firstName",
-                        ),
-                        rx.input(
-                            placeholder="Last Name",
-                            name="lastName",
-                        ),
-                        rx.input(
-                            placeholder="User Name",
-                            name="userName",
-                        ),
-                        rx.input(
-                            placeholder="Email Address",
-                            name="emailAddress",
-                        ),
-                        rx.hstack(
-                            rx.checkbox("I agree to the", name="check"),
-                            rx.link("Terms and Conditions", href="/about", size = "2")
-                        ),
-                        rx.button("Submit", type="submit"),
-                        align="center",
-                    ),
-                    on_submit=FormState.handleSubmit,
-                    reset_on_submit=True,
-                ),
-            ),
-        ),
     )
 
 def dashboard():
@@ -152,6 +118,7 @@ def navbar_link(text: str, url: str) -> rx.Component:
 
 def header() -> rx.Component:
     return rx.box(
+        rx.color_mode.button(position="top-right"),
         rx.desktop_only(
             rx.hstack(
                 rx.hstack(
@@ -174,26 +141,18 @@ def header() -> rx.Component:
                     align_items="center"
                 ),
                 rx.hstack(
-                    rx.button(
-                        "Sign Up",
-                        size="3",
-                        variant="outline",
+                    rx.dialog.root(
+                        rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
+                        createAccountDialog()
                     ),
                     rx.dialog.root(
-                        rx.dialog.trigger(rx.button("Log in", size="3")),
-                        rx.dialog.content(
-                            rx.dialog.title("Log in"),
-                            rx.dialog.description(
-                            "log in stuff",
-                            ),
-                            rx.dialog.close(
-                                rx.button("Close", size="3"),
-                            ),
-                        ),
+                        rx.dialog.trigger(rx.button("Login", size="3")),
+                        loginDialog()
                     ),
                 ),
                 spacing="4",
                 justify="between",
+                align="center"
             ),
             justify="between",
             align_items="center",
@@ -221,8 +180,8 @@ def header() -> rx.Component:
                         rx.menu.item("About"),
                         rx.menu.item("Dashboard"),
                         rx.menu.separator(),
-                        rx.menu.item("Log in"),
-                        rx.menu.item("Sign up"),
+                        rx.menu.item("Login"),
+                        rx.menu.item("Create Account"),
                     ),
                     justify="end",
                 ),
@@ -232,12 +191,80 @@ def header() -> rx.Component:
         ),
         bg=rx.color("accent", 3),
         padding="1em",
-        # position="fixed",
-        # top="0px",
-        # z_index="5",
         width="100%",
     )
 
+def loginDialog():
+    return rx.dialog.content(
+        rx.dialog.title("Login"),
+        rx.container(
+            rx.vstack(
+                rx.form(
+                    rx.vstack(
+                        rx.input(
+                            placeholder="User Name",
+                            name="userName",
+                        ),
+                        rx.input(
+                            placeholder="Password",
+                            name="passWord",
+                        ),
+                        rx.button("Submit", type="submit"),
+                        align="center",
+                    ),
+                    on_submit=FormState.handleSubmit,
+                    reset_on_submit=True,
+                ),
+            ),
+        ),
+        rx.dialog.close(
+            rx.button("Close", size="3"),
+        ),
+    ),
+
+def createAccountDialog():
+    return rx.dialog.content(
+        rx.dialog.title("Create Account"),
+        rx.container(
+            rx.vstack(
+                rx.form(
+                    rx.vstack(
+                        rx.input(
+                            placeholder="First Name",
+                            name="firstName",
+                        ),
+                        rx.input(
+                            placeholder="Last Name",
+                            name="lastName",
+                        ),
+                        rx.input(
+                            placeholder="User Name",
+                            name="userName",
+                        ),
+                        rx.input(
+                            placeholder="Password",
+                            name="passWord",
+                        ),
+                        rx.input(
+                            placeholder="Email Address",
+                            name="emailAddress",
+                        ),
+                        rx.hstack(
+                            rx.checkbox("I agree to the", name="check"),
+                            rx.link("Terms and Conditions", href="/about", size = "2")
+                        ),
+                        rx.button("Submit", type="submit"),
+                        align="center",
+                    ),
+                    on_submit=FormState.handleSubmit,
+                    reset_on_submit=True,
+                ),
+            ),
+        ),
+        rx.dialog.close(
+            rx.button("Close", size="3"),
+        ),
+    ),
 
 
 # app = rx.App()
@@ -247,9 +274,7 @@ app.add_all_routes_endpoint()
 
 app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
-app.add_page(login, route="/login")
 app.add_page(aboutUs, route="/about")
-app.add_page(createAccount, route="/createAccount")
 
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
