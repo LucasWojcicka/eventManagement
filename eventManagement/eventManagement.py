@@ -43,23 +43,6 @@ class LoginLogic(rx.State):
         self.form_data = formData
         """Returned handshake is confirmed
         if login successful do"""
-        self.logged_in = True
-
-    def logged_in(self):
-        if self.logged_in == False:
-            rx.hstack(
-                rx.dialog.root(
-                    rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
-                    createAccountDialog()
-                ),
-                rx.dialog.root(
-                    rx.dialog.trigger(rx.button("Login", size="3")),
-                    loginDialog()
-                ),
-            ),
-        else:
-            rx.avatar(src="/logo.jpg", fallback="LW", size="1"),
-
 
 def index() -> rx.Component:
     # Index page
@@ -74,6 +57,22 @@ def index() -> rx.Component:
             min_height="85vh",
         ),
     )
+
+logged_in = True
+def login_logic():
+    if logged_in == False:
+        return rx.hstack(
+            rx.dialog.root(
+                rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
+                createAccountDialog()
+            ),
+            rx.dialog.root(
+                rx.dialog.trigger(rx.button("Login", size="3")),
+                loginDialog()
+            ),
+        ),
+    else:
+        return rx.avatar(src="/logo.jpg", fallback="LW", size="1"),
 
 def aboutUs():
     return rx.container(
@@ -122,16 +121,17 @@ def header() -> rx.Component:
                     spacing="4",
                     align_items="center"
                 ),
-                rx.hstack(
-                    rx.dialog.root(
-                        rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
-                        createAccountDialog()
-                    ),
-                    rx.dialog.root(
-                        rx.dialog.trigger(rx.button("Login", size="3")),
-                        loginDialog()
-                    ),
-                ),
+                login_logic(),
+                # rx.hstack(
+                #     rx.dialog.root(
+                #         rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
+                #         createAccountDialog()
+                #     ),
+                #     rx.dialog.root(
+                #         rx.dialog.trigger(rx.button("Login", size="3")),
+                #         loginDialog()
+                #     ),
+                # ),
                 spacing="4",
                 justify="between",
                 align="center"
