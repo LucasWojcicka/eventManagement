@@ -57,46 +57,10 @@ def index() -> rx.Component:
         ),
     )
 
-def login():
-    return rx.container(
-        header(),
-        rx.container(
-            rx.heading("Login", size="6", align="center")
-        ),
-        rx.container(
-            rx.vstack(
-                rx.form(
-                    rx.vstack(
-                        rx.input(
-                            placeholder="User Name",
-                            name="userName",
-                        ),
-                        rx.input(
-                            placeholder="Email Address",
-                            name="emailAddress",
-                        ),
-                        rx.button("Submit", type="submit"),
-                        align="center",
-                    ),
-                    on_submit=FormState.handleSubmit,
-                    reset_on_submit=True,
-                ),
-            ),
-        ),
-    )
-
 def aboutUs():
     return rx.container(
         header(),
         rx.text("about us", size = "5"),
-    )
-
-def createAccount():
-        return rx.container(
-        header(),
-        rx.container(
-            rx.heading("Create Account", size="6", align="center")
-        ),
     )
 
 def dashboard():
