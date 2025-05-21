@@ -4,6 +4,7 @@ from typing import List, Optional
 import reflex as rx
 from sqlmodel import Field
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
+from eventManagement.models.organiser_event_link import OrganiserEventLink
 
 from eventManagement.models.event import Event
 from eventManagement.models.user import User
@@ -11,8 +12,8 @@ from eventManagement.models.user import User
 
 class Organiser(rx.Model, table=True):
     # user_id : int = Field(default=None, foreign_key="user.id")
-    user_id : int = Field(default=None, foreign_key="user.id")
-
+    user_id: int = Field(default=None, foreign_key="user.id")
+    events: list[Event] = Relationship(link_model=OrganiserEventLink)
     user: "User" = Relationship(
     )
 

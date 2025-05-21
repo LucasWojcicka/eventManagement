@@ -90,10 +90,20 @@ class EventServices(rx.State):
         with rx.session() as session:
             return session.exec(Event.select().where(Event.date >= start_date and Event.date <= end_date)).all()
 
-    # get by location
-    # get by status
-    # get by type
-    # sort ...
+    @staticmethod
+    def get_event_by_location(location: str):
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.location == location)).all()
+
+    @staticmethod
+    def get_event_by_status(status: str):
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.status == status)).all()
+
+    @staticmethod
+    def get_event_by_type(event_type: str):
+        with rx.session() as session:
+            return session.exec(Event.select().where(Event.event_type == event_type)).all()
 
     # setters
     @staticmethod
