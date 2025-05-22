@@ -1,4 +1,5 @@
 import reflex as rx
+import sqlalchemy
 
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
@@ -29,9 +30,65 @@ async def get_users():
 @fastapi_app.get("/api/events")
 async def get_events():
     from eventManagement.services.eventServices import EventServices
-    load_events = EventServices.LoadEvents()
-    load_events.load_all_events()
-    return load_events.events
+    all_events = EventServices.get_all_events()
+    # load_events = EventServices.LoadEvents()
+    # load_events.load_all_events()
+    return all_events
+
+
+# @fastapi_app.get("/api/login_user")
+# async def login_user(username, password):
+#     from eventManagement.services.user_services import UserServices
+#     login_user_def = UserServices.LogInUser
+#     login_user_def.log_in_user()
+#     # load_events = EventServices.LoadEvents()
+#     # load_events.load_all_events()
+#     return login_user_def.good_login_data
+
+
+# @fastapi_app.get("/api/get_event")
+# async def get_event(given_id):
+#     from eventManagement.services.eventServices import EventServices
+#     get_event_def = EventServices.GetEvent()
+#     get_event_def.get_event_by_id()
+#     return get_event_def.event_found
+
+
+@fastapi_app.get("/api/get_event_by_id")
+async def get_event(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    event = EventServices.get_event_by_id(event_id)
+    return event
+
+
+@fastapi_app.get("/api/get_attendee_events")
+async def get_attended_events(attendee_id: int):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.get_attending_events(attendee_id)
+    return attendee
+    # return events
+
+
+@fastapi_app.get("/api/set_event_name")
+async def get_attended_events(event_id: int, event_name: str):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.set_event_name(event_id, event_name)
+    return attendee
+    # return events
+
+
+@fastapi_app.get("/api/get_attenders_of_event")
+async def get_attenders(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    attendee = EventServices.get_attenders(event_id)
+    return attendee
+
+
+@fastapi_app.get("/api/get_event_by_name")
+async def get_event_by_name(name: str):
+    from eventManagement.services.eventServices import EventServices
+    return EventServices.get_event_by_name(name)
+
 
 class LoginLogic(rx.State):
     form_data: dict = {}
@@ -43,6 +100,7 @@ class LoginLogic(rx.State):
         self.form_data = formData
         """Returned handshake is confirmed
         if login successful do"""
+
 
 def index() -> rx.Component:
     # Index page
@@ -74,10 +132,11 @@ def login_logic():
     else:
         return rx.avatar(src="/logo.jpg", fallback="LW", size="1"),
 
+
 def aboutUs():
     return rx.container(
         header(),
-        rx.text("about us", size = "5"),
+        rx.text("about us", size="5"),
     )
 
 def dashboard():
@@ -92,10 +151,12 @@ def dashboard():
         )   
     )
 
+
 def navbar_link(text: str, url: str) -> rx.Component:
     return rx.link(
         rx.text(text, size="4", weight="medium"), href=url
     )
+
 
 def header() -> rx.Component:
     return rx.box(
@@ -231,7 +292,9 @@ app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
 
-# seed_users()
-# disperse_users_into_roles()
-# seed_events()
-# seed_one_attendee()
+#
+seed_users()
+disperse_users_into_roles()
+seed_events()
+seed_one_attendee()
+seed_perks()

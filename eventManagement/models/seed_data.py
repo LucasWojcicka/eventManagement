@@ -101,6 +101,21 @@ def get_random_event_status():
     return event_status_list[random_index].value
 
 
+def fake_convention_venue():
+    fake = Faker()
+    venue_suffixes = ["Convention Center", "Expo Hall", "Event Pavilion", "Auditorium", "Arena", "Dome",
+                      "Exhibition Centre", "Convention Ground", "Meeting Ground", "Hall"]
+    venue_name = fake.word().title() + " " + random.choice(venue_suffixes)
+
+    street_address = fake.street_address()
+    city = fake.city()
+    state = fake.state_abbr()
+    zip_code = fake.zipcode()
+
+    full_address = f"{venue_name}\n{street_address}\n{city}, {state} {zip_code}"
+    return full_address
+
+
 def seed_events():
     print("events")
     with rx.session() as session:
@@ -112,6 +127,7 @@ def seed_events():
 
         for x in range(25):
             random.seed = datetime.time
+            seeded_venue = fake_convention_venue()
             seeded_event_type = get_random_event_type()
             seeded_event_status = get_random_event_status()
             price_range_lower = random.randrange(10, 500, 10)
@@ -126,11 +142,13 @@ def seed_events():
                                  seeded_time.minute, seeded_time.second)
             print("*(&#$#$(*&@#$)(O#I@$)(@#$#@$I&)@#")
 
-            new_event = Event(name=str(fake.word()),
+            new_event = Event(name=str(fake.word().title()),
                               duration=seeded_duration,
                               event_type=seeded_event_type,
+                              # event_type="seed",
                               date=make_date,
-                              location=str(fake.address()),
+                              # location=str(fake.address()),
+                              location=str(seeded_venue),
                               price_range_lowest=price_range_lower,
                               price_range_highest=price_range_higher,
                               description=fake.paragraph(1),
@@ -146,10 +164,20 @@ def seed_events():
 
 
 def seed_one_attendee():
-
     with rx.session() as session:
         one_attendee = session.exec(Attendee.select()).first()
         one_event = session.exec(Event.select()).first()
         one_attendee.events.append(one_event)
         session.commit()
 
+
+def seed_perks():
+    with rx.session() as session:
+        events = session.query(Event).all()
+        for i, event in enumerate(events):
+            print(event.name)
+            print("bacon bacon bacon")
+
+
+def seed_registrations():
+    print("bacon bacon bacon")
