@@ -92,14 +92,11 @@ async def get_event_by_name(name: str):
 
 class LoginLogic(rx.State):
     form_data: dict = {}
-    logged_in = False
 
     @rx.event
     def handleSubmit(self, formData: dict):
         # Handle the form submit.
         self.form_data = formData
-        """Returned handshake is confirmed
-        if login successful do"""
 
 
 def index() -> rx.Component:
@@ -116,7 +113,7 @@ def index() -> rx.Component:
         ),
     )
 
-logged_in = False
+logged_in = True
 def login_logic():
     if logged_in == False:
         return rx.hstack(
@@ -130,7 +127,7 @@ def login_logic():
             ),
         ),
     else:
-        return rx.avatar(src="/logo.jpg", fallback="LW", size="1"),
+        return rx.avatar(src="/logo.jpg", fallback="LW", size="3"),
 
 
 def aboutUs():
@@ -180,7 +177,8 @@ def header() -> rx.Component:
                     navbar_link("About", "/about"),
                     navbar_link("Dashboard", "/dashboard"),
                     spacing="4",
-                    align_items="center"
+                    align_items="center",
+                    justify="center"
                 ),
                 login_logic(),
                 # rx.hstack(
@@ -193,7 +191,7 @@ def header() -> rx.Component:
                 #         loginDialog()
                 #     ),
                 # ),
-                spacing="4",
+                spacing="1",
                 justify="between",
                 align="center"
             ),
