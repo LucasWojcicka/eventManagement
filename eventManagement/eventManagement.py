@@ -1,3 +1,5 @@
+import datetime
+
 import reflex as rx
 import sqlalchemy
 
@@ -5,6 +7,7 @@ from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
+from eventManagement.services.user_services import UserServices
 from rxconfig import config
 # from eventManagement.models import User, Attendee, Organiser, Event
 from fastapi import FastAPI, Depends
@@ -95,8 +98,27 @@ class LoginLogic(rx.State):
 
     @rx.event
     def handleSubmit(self, formData: dict):
-        # Handle the form submit.
-        self.form_data = formData
+        print("bacon bacon bacon")
+        username = formData.get("user_name")
+        password = formData.get("pass_word")
+        correctDetails = UserServices.login_user(username,password)
+        print(correctDetails)
+
+
+class CreateAccount(rx.State):
+    form_data: dict = {}
+
+    @rx.event
+    def handleSubmit(self, formData: dict):
+        print("bacon bacon bacon")
+        username = formData.get("user_name")
+        password = formData.get("pass_word")
+        name = formData.get("first_name") + " " + formData.get("last_name")
+        email = formData.get("email_address")
+        birth = formData.get("date_of_birth")
+        phone = formData.get("phone_number")
+        correctDetails = UserServices.make_base_user(name,email,birth,password,username,phone)
+        print(correctDetails)
 
 
 def index() -> rx.Component:
@@ -113,7 +135,7 @@ def index() -> rx.Component:
         ),
     )
 
-logged_in = True
+logged_in = False
 def login_logic():
     if logged_in == False:
         return rx.hstack(
@@ -130,10 +152,17 @@ def login_logic():
         return rx.avatar(src="/logo.jpg", fallback="LW", size="3"),
 
 
+
 def aboutUs():
     return rx.container(
         header(),
         rx.text("about us", size="5"),
+    )
+
+def pureTesting():
+    return rx.container(
+        header(),
+        rx.text("pure testing", size="5"),
     )
 
 def dashboard():
@@ -145,7 +174,7 @@ def dashboard():
                 spacing="4",
                 width="100%",
             )
-        )   
+        )
     )
 
 
@@ -176,6 +205,7 @@ def header() -> rx.Component:
                     navbar_link("Home", "/"),
                     navbar_link("About", "/about"),
                     navbar_link("Dashboard", "/dashboard"),
+                    navbar_link("Purely Testing", "/testing"),
                     spacing="4",
                     align_items="center",
                     justify="center"
@@ -260,6 +290,14 @@ def createAccountDialog():
                             placeholder="Email Address",
                             name="email_address",
                         ),
+                        rx.input(
+                            placeholder="Phone Number",
+                            name="phone_number",
+                        ),
+                        rx.input(
+                            type="date",
+                            name="date_of_birth",
+                        ),
                         rx.hstack(
                             rx.checkbox("I agree to the", name="check"),
                             rx.link(
@@ -271,7 +309,7 @@ def createAccountDialog():
                         rx.button("Submit", type="submit"),
                         align="center",
                     ),
-                    on_submit=LoginLogic.handleSubmit,
+                    on_submit=CreateAccount.handleSubmit,
                     reset_on_submit=True,
                 ),
             ),
@@ -289,6 +327,7 @@ app.add_all_routes_endpoint()
 app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
+app.add_page(pureTesting(), route="/testing")
 
 #
 seed_users()

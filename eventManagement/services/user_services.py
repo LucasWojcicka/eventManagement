@@ -95,13 +95,13 @@ class UserServices(rx.State):
         with rx.session() as session:
             exists = session.exec(User.select().where(User.username == username)).first()
             if (exists is not None):
+                return False;
+            else:
                 session.add(new_user)
                 session.add(new_attendee_from_user)
                 session.add(new_organiser_from_user)
                 session.commit()
                 return True
-            else:
-                return False
 
     @staticmethod
     def set_user_name(user_id: int, username: str):
@@ -152,9 +152,10 @@ class UserServices(rx.State):
             user = session.exec(User.select().where(User.username == username and User.password == password)).first()
             if (user is not None):
                 print("nuh uh")
+                return True
             else:
                 print("rklsdhfsd")
-
+                return False
 # login user, make event, unmake-event, attend event, un-attend event
 
 # class AddUser(rx.State):
