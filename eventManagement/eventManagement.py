@@ -3,25 +3,32 @@ import datetime
 import reflex as rx
 import sqlalchemy
 
+from eventManagement.models.event import Event
 from eventManagement.models.seed_data import seed_users
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
+from eventManagement.services.eventServices import EventServices
 from eventManagement.services.user_services import UserServices
 from rxconfig import config
 # from eventManagement.models import User, Attendee, Organiser, Event
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
+
 class State(rx.State):
     """The app state."""
     ...
 
+
 fastapi_app = FastAPI(title="My API")
+
+
 # Add routes to the FastAPI app
 @fastapi_app.get("/api/items")
 async def get_items():
     return "meow"
+
 
 @fastapi_app.get("/api/users")
 async def get_users():
@@ -29,6 +36,7 @@ async def get_users():
     load_users = UserServices.LoadUsers()
     load_users.load_all_users()
     return load_users.users
+
 
 @fastapi_app.get("/api/events")
 async def get_events():
@@ -92,6 +100,14 @@ async def get_event_by_name(name: str):
     from eventManagement.services.eventServices import EventServices
     return EventServices.get_event_by_name(name)
 
+class DashboardState(rx.State):
+    events: list[dict] = []
+
+    @rx.event
+    async def load_events(self):
+        from eventManagement.services.eventServices import EventServices
+        events_list = EventServices.get_all_events()
+        self.events = [event.to_dict() for event in events_list]
 
 class LoginLogic(rx.State):
     form_data: dict = {}
@@ -101,7 +117,7 @@ class LoginLogic(rx.State):
         print("bacon bacon bacon")
         username = formData.get("user_name")
         password = formData.get("pass_word")
-        correctDetails = UserServices.login_user(username,password)
+        correctDetails = UserServices.login_user(username, password)
         print(correctDetails)
 
 
@@ -117,7 +133,7 @@ class CreateAccount(rx.State):
         email = formData.get("email_address")
         birth = formData.get("date_of_birth")
         phone = formData.get("phone_number")
-        correctDetails = UserServices.make_base_user(name,email,birth,password,username,phone)
+        correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
         print(correctDetails)
 
 
@@ -135,7 +151,10 @@ def index() -> rx.Component:
         ),
     )
 
+
 logged_in = False
+
+
 def login_logic():
     if logged_in == False:
         return rx.hstack(
@@ -152,12 +171,12 @@ def login_logic():
         return rx.avatar(src="/logo.jpg", fallback="LW", size="3"),
 
 
-
 def aboutUs():
     return rx.container(
         header(),
         rx.text("about us", size="5"),
     )
+
 
 def pureTesting():
     return rx.container(
@@ -165,17 +184,54 @@ def pureTesting():
         rx.text("pure testing", size="5"),
     )
 
+
+
+
+
+
+# def dashboard():
+#         return rx.container(
+#             header(),
+#             rx.container(
+#                 rx.grid(rx.foreach(rx.Var.range(12), lambda i: rx.card(f"Card {i + 1}", height="10vh"), ),
+#                         columns="3",
+#                         spacing="4",
+#                         width="100%",
+#                         )
+#             )
+#         )
+@rx.page(on_load=DashboardState.load_events)
 def dashboard():
+    DashboardState.load_events()
+
+
     return rx.container(
         header(),
         rx.container(
-            rx.grid(rx.foreach(rx.Var.range(12),lambda i: rx.card(f"Card {i + 1}", height="10vh"),),
+            rx.grid(
+                rx.foreach(
+                    DashboardState.events,
+                    # lambda event: rx.card(
+                    #     rx.text(event["name"]),rx.text(event["event_type"]),
+                    #     height="10vh"
+                    # ),
+                    lambda event: rx.card(
+                        rx.vstack(
+                            rx.text(f"{event['name']} {event['event_type']}", font_weight="bold"),
+                            rx.text(event["location"], font_style="italic"),
+                            # rx.text(event["date"].strftime("%d/%m/%Y - %H:%M"), font_weight="bold"),
+                            rx.text(event["age_range"]),
+                        ),
+                        height="25vh"
+                    )
+                ),
                 columns="3",
                 spacing="4",
                 width="100%",
             )
-        )
+        ),
     )
+
 
 
 def navbar_link(text: str, url: str) -> rx.Component:
@@ -233,6 +289,7 @@ def header() -> rx.Component:
         width="100%",
     )
 
+
 def loginDialog():
     return rx.dialog.content(
         rx.dialog.title("Login"),
@@ -261,6 +318,7 @@ def loginDialog():
             rx.button("Close", size="3"),
         ),
     ),
+
 
 def createAccountDialog():
     return rx.dialog.content(

@@ -93,6 +93,7 @@ class UserServices(rx.State):
             user_id=new_user.id
         )
         with rx.session() as session:
+            # TODO not allow user to make account if phone-number or email are taken
             exists = session.exec(User.select().where(User.username == username)).first()
             if (exists is not None):
                 return False;
