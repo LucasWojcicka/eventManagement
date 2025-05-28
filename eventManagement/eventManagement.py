@@ -4,7 +4,7 @@ import reflex as rx
 import sqlalchemy
 
 from eventManagement.models.event import Event
-from eventManagement.models.seed_data import seed_users
+from eventManagement.models.seed_data import seed_users, seed_perks
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
@@ -413,4 +413,4 @@ seed_users()
 disperse_users_into_roles()
 seed_events()
 seed_one_attendee()
-# seed_perks()
+seed_perks()

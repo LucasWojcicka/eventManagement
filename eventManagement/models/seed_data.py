@@ -9,7 +9,7 @@ from sqlmodel import Session
 from faker import Faker
 
 from eventManagement.models.user import User
-from eventManagement.models.event import Event, EventType, EventStatus
+from eventManagement.models.event import Event, EventType, EventStatus, Perk
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
 
@@ -173,10 +173,29 @@ def seed_one_attendee():
 
 def seed_perks():
     with rx.session() as session:
+        fake = Faker()
         events = session.query(Event).all()
         for i, event in enumerate(events):
-            print(event.name)
-            print("bacon bacon bacon")
+            for x in range(1, random.randrange(2, 6, 1)):
+                new_perk = Perk(
+                    name=str(fake.word().title()) + " Experience",
+                    price=10,
+                    description=fake.paragraph(1),
+                    age_range=event.age_range,
+                    duration=random.randrange(1, 5, 10),
+                    available_slots=random.randrange(10, 400, 10),
+                    event_id=event.id
+                )
+                session.add(new_perk)
+        session.commit()
+
+
+# def seed_perks():
+#     with rx.session() as session:
+#         events = session.query(Event).all()
+#         for i, event in enumerate(events):
+#             print(event.name)
+#             print("bacon bacon bacon")
 
 
 def seed_registrations():

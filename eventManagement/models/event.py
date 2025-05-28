@@ -52,7 +52,6 @@ class Perk(rx.Model, table=True):
         default=None,
         foreign_key="event.id"
     )
-
     event: "Event" = Relationship(
     )
 
