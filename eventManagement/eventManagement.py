@@ -100,14 +100,25 @@ async def get_event_by_name(name: str):
     from eventManagement.services.eventServices import EventServices
     return EventServices.get_event_by_name(name)
 
+
 class DashboardState(rx.State):
     events: list[dict] = []
+    selected_event: dict | None = None
 
     @rx.event
     async def load_events(self):
         from eventManagement.services.eventServices import EventServices
         events_list = EventServices.get_all_events()
         self.events = [event.to_dict() for event in events_list]
+
+    @rx.event
+    async def fetch_and_redirect(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            return rx.redirect("/event-detail")
+
 
 class LoginLogic(rx.State):
     form_data: dict = {}
@@ -185,10 +196,6 @@ def pureTesting():
     )
 
 
-
-
-
-
 # def dashboard():
 #         return rx.container(
 #             header(),
@@ -203,7 +210,6 @@ def pureTesting():
 @rx.page(on_load=DashboardState.load_events)
 def dashboard():
     DashboardState.load_events()
-
 
     return rx.container(
         header(),
@@ -222,7 +228,8 @@ def dashboard():
                             # rx.text(event["date"].strftime("%d/%m/%Y - %H:%M"), font_weight="bold"),
                             rx.text(event["age_range"]),
                         ),
-                        height="25vh"
+                        height="25vh",
+                        on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
                     )
                 ),
                 columns="3",
@@ -232,6 +239,20 @@ def dashboard():
         ),
     )
 
+
+@rx.page(route="/event-detail")
+def event_detail():
+    event = DashboardState.selected_event
+
+    return rx.container(
+        rx.heading(event["name"]),
+        rx.text(f"Type: {event['event_type']}"),
+        rx.text(f"Location: {event['location']}"),
+        rx.text(f"Date: {event['date']}"),
+        rx.text(f"Age Range: {event['age_range']}"),
+        rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+        padding="4",
+    )
 
 
 def navbar_link(text: str, url: str) -> rx.Component:
