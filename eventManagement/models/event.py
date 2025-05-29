@@ -52,7 +52,6 @@ class Perk(rx.Model, table=True):
         default=None,
         foreign_key="event.id"
     )
-
     event: "Event" = Relationship(
     )
 
@@ -91,6 +90,25 @@ class Event(rx.Model, table=True):
     status: str
     capacity: int
     occupied_capacity: int
+
+    def to_dict(self):
+        return {
+            "event_type": self.event_type,
+            "id": self.id,
+            "name": self.name,
+            "location": self.location,
+            "price_range_highest": self.price_range_highest,
+            "age_range": self.age_range,
+            "status": self.status,
+            "occupied_capacity": self.occupied_capacity,
+            "date": self.date.isoformat() if self.date else None,
+            "duration": self.duration,
+            "price_range_lowest": self.price_range_lowest,
+            "description": self.description,
+            "attendees_num": self.attendees_num,
+            "capacity": self.capacity,
+
+        }
     # perks: list[Perk] = Relationship(link_model=EventTiers)
     # registrations: list[Registration] = Relationship(link_model=EventRegistrations)
 
