@@ -4,7 +4,7 @@ from datetime import datetime
 # from sqlmodel import col
 
 from eventManagement.models.attendee import Attendee
-from eventManagement.models.event import EventType, EventStatus, Event, Registration
+from eventManagement.models.event import EventType, EventStatus, Event, Registration, Perk
 # from eventManagement.models.user import User
 from typing import Optional, List
 from typing import Annotated
@@ -104,6 +104,11 @@ class EventServices(rx.State):
     def get_event_by_type(event_type: str):
         with rx.session() as session:
             return session.exec(Event.select().where(Event.event_type == event_type)).all()
+
+    @staticmethod
+    def get_event_perks_from_event_id(event_id: int):
+        with rx.session() as session:
+            return session.exec(Perk.select().where(Perk.event_id == event_id)).all()
 
     # setters
     @staticmethod

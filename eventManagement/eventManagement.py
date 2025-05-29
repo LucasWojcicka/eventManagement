@@ -1,24 +1,34 @@
+import datetime
+
 import reflex as rx
 import sqlalchemy
 
-from eventManagement.models.seed_data import seed_users
+from eventManagement.models.event import Event
+from eventManagement.models.seed_data import seed_users, seed_perks
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
+from eventManagement.services.eventServices import EventServices
+from eventManagement.services.user_services import UserServices
 from rxconfig import config
 # from eventManagement.models import User, Attendee, Organiser, Event
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
+
 class State(rx.State):
     """The app state."""
     ...
 
+
 fastapi_app = FastAPI(title="My API")
+
+
 # Add routes to the FastAPI app
 @fastapi_app.get("/api/items")
 async def get_items():
     return "meow"
+
 
 @fastapi_app.get("/api/users")
 async def get_users():
@@ -26,6 +36,7 @@ async def get_users():
     load_users = UserServices.LoadUsers()
     load_users.load_all_users()
     return load_users.users
+
 
 @fastapi_app.get("/api/events")
 async def get_events():
@@ -68,6 +79,12 @@ async def get_attended_events(attendee_id: int):
     return attendee
     # return events
 
+@fastapi_app.get("/api/get_event_perks")
+async def get_event_perks(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    perks = EventServices.get_event_perks_from_event_id(event_id)
+    return perks
+
 
 @fastapi_app.get("/api/set_event_name")
 async def get_attended_events(event_id: int, event_name: str):
@@ -90,13 +107,51 @@ async def get_event_by_name(name: str):
     return EventServices.get_event_by_name(name)
 
 
+class DashboardState(rx.State):
+    events: list[dict] = []
+    selected_event: dict | None = None
+
+    @rx.event
+    async def load_events(self):
+        from eventManagement.services.eventServices import EventServices
+        events_list = EventServices.get_all_events()
+        self.events = [event.to_dict() for event in events_list]
+
+    @rx.event
+    async def fetch_and_redirect(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            return rx.redirect("/event-detail")
+
+
 class LoginLogic(rx.State):
     form_data: dict = {}
 
     @rx.event
     def handleSubmit(self, formData: dict):
-        # Handle the form submit.
-        self.form_data = formData
+        print("bacon bacon bacon")
+        username = formData.get("user_name")
+        password = formData.get("pass_word")
+        correctDetails = UserServices.login_user(username, password)
+        print(correctDetails)
+
+
+class CreateAccount(rx.State):
+    form_data: dict = {}
+
+    @rx.event
+    def handleSubmit(self, formData: dict):
+        print("bacon bacon bacon")
+        username = formData.get("user_name")
+        password = formData.get("pass_word")
+        name = formData.get("first_name") + " " + formData.get("last_name")
+        email = formData.get("email_address")
+        birth = formData.get("date_of_birth")
+        phone = formData.get("phone_number")
+        correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
+        print(correctDetails)
 
 
 def index() -> rx.Component:
@@ -113,7 +168,10 @@ def index() -> rx.Component:
         ),
     )
 
-logged_in = True
+
+logged_in = False
+
+
 def login_logic():
     if logged_in == False:
         return rx.hstack(
@@ -136,16 +194,70 @@ def aboutUs():
         rx.text("about us", size="5"),
     )
 
+
+def pureTesting():
+    return rx.container(
+        header(),
+        rx.text("pure testing", size="5"),
+    )
+
+
+# def dashboard():
+#         return rx.container(
+#             header(),
+#             rx.container(
+#                 rx.grid(rx.foreach(rx.Var.range(12), lambda i: rx.card(f"Card {i + 1}", height="10vh"), ),
+#                         columns="3",
+#                         spacing="4",
+#                         width="100%",
+#                         )
+#             )
+#         )
+@rx.page(on_load=DashboardState.load_events)
 def dashboard():
+    DashboardState.load_events()
+
     return rx.container(
         header(),
         rx.container(
-            rx.grid(rx.foreach(rx.Var.range(12),lambda i: rx.card(f"Card {i + 1}", height="10vh"),),
+            rx.grid(
+                rx.foreach(
+                    DashboardState.events,
+                    # lambda event: rx.card(
+                    #     rx.text(event["name"]),rx.text(event["event_type"]),
+                    #     height="10vh"
+                    # ),
+                    lambda event: rx.card(
+                        rx.vstack(
+                            rx.text(f"{event['name']} {event['event_type']}", font_weight="bold"),
+                            rx.text(event["location"], font_style="italic"),
+                            # rx.text(event["date"].strftime("%d/%m/%Y - %H:%M"), font_weight="bold"),
+                            rx.text(event["age_range"]),
+                        ),
+                        height="25vh",
+                        on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
+                    )
+                ),
                 columns="3",
                 spacing="4",
                 width="100%",
             )
-        )   
+        ),
+    )
+
+
+@rx.page(route="/event-detail")
+def event_detail():
+    event = DashboardState.selected_event
+
+    return rx.container(
+        rx.heading(event["name"]),
+        rx.text(f"Type: {event['event_type']}"),
+        rx.text(f"Location: {event['location']}"),
+        rx.text(f"Date: {event['date']}"),
+        rx.text(f"Age Range: {event['age_range']}"),
+        rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+        padding="4",
     )
 
 
@@ -176,6 +288,7 @@ def header() -> rx.Component:
                     navbar_link("Home", "/"),
                     navbar_link("About", "/about"),
                     navbar_link("Dashboard", "/dashboard"),
+                    navbar_link("Purely Testing", "/testing"),
                     spacing="4",
                     align_items="center",
                     justify="center"
@@ -202,6 +315,7 @@ def header() -> rx.Component:
         padding="1em",
         width="100%",
     )
+
 
 def loginDialog():
     return rx.dialog.content(
@@ -232,6 +346,7 @@ def loginDialog():
         ),
     ),
 
+
 def createAccountDialog():
     return rx.dialog.content(
         rx.dialog.title("Create Account"),
@@ -260,6 +375,14 @@ def createAccountDialog():
                             placeholder="Email Address",
                             name="email_address",
                         ),
+                        rx.input(
+                            placeholder="Phone Number",
+                            name="phone_number",
+                        ),
+                        rx.input(
+                            type="date",
+                            name="date_of_birth",
+                        ),
                         rx.hstack(
                             rx.checkbox("I agree to the", name="check"),
                             rx.link(
@@ -271,7 +394,7 @@ def createAccountDialog():
                         rx.button("Submit", type="submit"),
                         align="center",
                     ),
-                    on_submit=LoginLogic.handleSubmit,
+                    on_submit=CreateAccount.handleSubmit,
                     reset_on_submit=True,
                 ),
             ),
@@ -289,9 +412,11 @@ app.add_all_routes_endpoint()
 app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
+app.add_page(pureTesting(), route="/testing")
 
-# seed_users()
-# disperse_users_into_roles()
-# seed_events()
-# seed_one_attendee()
-# seed_perks()
+#
+seed_users()
+disperse_users_into_roles()
+seed_events()
+seed_one_attendee()
+seed_perks()
