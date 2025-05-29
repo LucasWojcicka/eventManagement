@@ -182,20 +182,12 @@ def seed_perks():
                     price=10,
                     description=fake.paragraph(1),
                     age_range=event.age_range,
-                    duration=random.randrange(1, 5, 10),
+                    duration=random.randrange(1, 5, 1),
                     available_slots=random.randrange(10, 400, 10),
                     event_id=event.id
                 )
                 session.add(new_perk)
         session.commit()
-
-
-# def seed_perks():
-#     with rx.session() as session:
-#         events = session.query(Event).all()
-#         for i, event in enumerate(events):
-#             print(event.name)
-#             print("bacon bacon bacon")
 
 
 def seed_registrations():

@@ -79,6 +79,12 @@ async def get_attended_events(attendee_id: int):
     return attendee
     # return events
 
+@fastapi_app.get("/api/get_event_perks")
+async def get_event_perks(event_id: int):
+    from eventManagement.services.eventServices import EventServices
+    perks = EventServices.get_event_perks_from_event_id(event_id)
+    return perks
+
 
 @fastapi_app.get("/api/set_event_name")
 async def get_attended_events(event_id: int, event_name: str):
