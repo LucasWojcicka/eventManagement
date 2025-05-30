@@ -67,6 +67,11 @@ class UserServices(rx.State):
             return session.exec(User.select().where(User.id == user_id)).first()
 
     @staticmethod
+    def get_user_by_username(username: str) -> User | None:
+        with rx.session() as session:
+            return session.exec(User.select().where(User.username == username)).first()
+
+    @staticmethod
     def get_organiser_from_base_user(user_id: int):
         with rx.session() as session:
             return session.exec(Organiser.select().where(Organiser.user_id == user_id)).first()

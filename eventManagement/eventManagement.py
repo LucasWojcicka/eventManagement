@@ -8,6 +8,7 @@ from eventManagement.models.seed_data import seed_users, seed_perks
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
+from eventManagement.models.user import User
 from eventManagement.services.eventServices import EventServices
 from eventManagement.services.user_services import UserServices
 from rxconfig import config
@@ -15,16 +16,9 @@ from rxconfig import config
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
-
-class State(rx.State):
-    """The app state."""
-    ...
-
-
 fastapi_app = FastAPI(title="My API")
 
 
-# Add routes to the FastAPI app
 @fastapi_app.get("/api/items")
 async def get_items():
     return "meow"
@@ -72,12 +66,27 @@ async def get_event(event_id: int):
     return event
 
 
+@fastapi_app.get("/api/get_user_by_id")
+async def get_user_by_id(user_id: int):
+    from eventManagement.services.user_services import UserServices
+    user = UserServices.get_user_by_id(user_id)
+    return user
+
+
+@fastapi_app.get("/api/get_user_by_username")
+async def get_user_by_id(username: str):
+    from eventManagement.services.user_services import UserServices
+    user = UserServices.get_user_by_username(username)
+    return user
+
+
 @fastapi_app.get("/api/get_attendee_events")
 async def get_attended_events(attendee_id: int):
     from eventManagement.services.eventServices import EventServices
     attendee = EventServices.get_attending_events(attendee_id)
     return attendee
     # return events
+
 
 @fastapi_app.get("/api/get_event_perks")
 async def get_event_perks(event_id: int):
@@ -107,7 +116,46 @@ async def get_event_by_name(name: str):
     return EventServices.get_event_by_name(name)
 
 
-class DashboardState(rx.State):
+class AppState(rx.State):
+    """The app state."""
+    current_user_id: int = -1
+    selected_user: dict | None = None
+    # current_user: User
+    ...
+
+    @rx.event
+    async def fetch_current_user(self):
+        from eventManagement.services.user_services import UserServices
+        if self.current_user_id:
+            user = UserServices.get_user_by_id(self.current_user_id)
+            if user:
+                self.selected_user = user.to_dict()
+
+    @rx.event
+    def setUser(self, user_id: int):
+        self.current_user_id = user_id
+        print(AppState.current_user_id)
+    # if(self.current_user_id != -1):
+    #     self.current_user = UserServices.get_user_by_id(self.current_user_id)
+
+
+# @rx.event
+# def fetch_current_user(self):
+#     from eventManagement.services.user_services import UserServices
+#
+#     if self.current_user_id:
+#         user = UserServices.get_user_by_id(self.current_user_id)
+#         if user:
+#             self.selected_user = user.to_dict()
+
+
+# fastapi_app = FastAPI(title="My API")
+
+
+# Add routes to the FastAPI app
+
+
+class DashboardState(AppState):
     events: list[dict] = []
     selected_event: dict | None = None
 
@@ -126,7 +174,7 @@ class DashboardState(rx.State):
             return rx.redirect("/event-detail")
 
 
-class LoginLogic(rx.State):
+class LoginLogic(AppState):
     form_data: dict = {}
 
     @rx.event
@@ -134,11 +182,26 @@ class LoginLogic(rx.State):
         print("bacon bacon bacon")
         username = formData.get("user_name")
         password = formData.get("pass_word")
+        print(username + " " + password)
         correctDetails = UserServices.login_user(username, password)
         print(correctDetails)
+        if (correctDetails == True):
+            user = UserServices.get_user_by_username(username)
+            print(user)
+            user_id = user.id
+            # setUser(AppState, user_id)
+            self.current_user_id = user_id
+            # AppState.current_user_id = user_id
+            # LoginLogic.father_state.setUser(State, user_id)
+            # rx.session().set("user_id", user.id)
+            print(AppState.current_user_id)
+            yield rx.redirect("/home")
+            # rx.navigate("/home", user_id=AppState.current_user_id)
+
+        print(AppState.current_user_id)
 
 
-class CreateAccount(rx.State):
+class CreateAccount(AppState):
     form_data: dict = {}
 
     @rx.event
@@ -152,16 +215,54 @@ class CreateAccount(rx.State):
         phone = formData.get("phone_number")
         correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
         print(correctDetails)
+        if (correctDetails == True):
+            print("good made user")
+            user = UserServices.get_user_by_username(username)
+            print(user)
+            user_id = user.id
+            # setUser(AppState, user_id)
+            self.current_user_id = user_id
+
+            yield rx.redirect("/home/")
+            # LoginLogic.handleSubmit(self,formData)
+        #     user = UserServices.get_user_by_id(username)
+        #     State.user_id = user.id
+        #     print(State.user_id)
+        #
+        # print(State.user_id)
 
 
+# def index() -> rx.Component:
+#     # Index page
+#     return rx.container(
+#         rx.color_mode.button(position="top-right"),
+#         rx.vstack(
+#             rx.heading("Welcome To Zen Planner! Where anyone can organise an Event!", size="9"),
+#             rx.text("Welcome", size="5"),
+#             rx.link(rx.button("Log in", size="4"), href="/dashboard"),
+#             rx.link(rx.button("Create Account", size="4"), href="/dashboard"),
+#             spacing="5",
+#             justify="center",
+#             min_height="85vh",
+#         ),
+#     )
 def index() -> rx.Component:
-    # Index page
     return rx.container(
         rx.color_mode.button(position="top-right"),
         rx.vstack(
-            rx.heading("Event Management Application TEST!", size="9"),
-            rx.text("Welcome", size="5"),
-            rx.link(rx.button("dashboard", size="4"), href="/dashboard"),
+            rx.heading("Welcome To Zen Planner!", size="9"),
+            rx.text("Where anyone can organise an event!", size="5"),
+            rx.hstack(
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Create Account", size="4", variant="outline")),
+                    createAccountDialog()
+                ),
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Login", size="4")),
+                    loginDialog()
+                ),
+                spacing="4"
+            ),
             spacing="5",
             justify="center",
             min_height="85vh",
@@ -246,6 +347,20 @@ def dashboard():
     )
 
 
+# @rx.page(route="/event-detail")
+# def event_detail():
+#     event = DashboardState.selected_event
+#
+#     return rx.container(
+#         rx.heading(event["name"]),
+#         rx.text(f"Type: {event['event_type']}"),
+#         rx.text(f"Location: {event['location']}"),
+#         rx.text(f"Date: {event['date']}"),
+#         rx.text(f"Age Range: {event['age_range']}"),
+#         rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+#         padding="4",
+#     )
+
 @rx.page(route="/event-detail")
 def event_detail():
     event = DashboardState.selected_event
@@ -257,6 +372,40 @@ def event_detail():
         rx.text(f"Date: {event['date']}"),
         rx.text(f"Age Range: {event['age_range']}"),
         rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+        padding="4",
+    )
+
+
+# @rx.page(route="/home")
+# # def user_home_page():
+# #     # user_id = int(AppState.current_user_id)
+# #     # user = UserServices.get_user_by_id(AppState.current_user_id)
+# #     # print(AppState.current_user_id)
+# #     # print(UserServices.get_user_by_id(AppState.current_user_id).name)
+# #     # print(AppState.current_user)
+# #
+# #     print("BALLLS")
+# #     print(AppState.current_user_id)
+# #     return rx.container(
+# #         # rx.heading(str(user.id)),
+# #         rx.heading(AppState.current_user_id),
+# #         # rx.text(f"Welcome {user.name} !"),
+# #         padding="4",
+# #     )
+@rx.page(route="/home", on_load=AppState.fetch_current_user)
+def user_home_page():
+    return rx.container(
+        rx.heading("User Home"),
+        rx.cond(
+            AppState.selected_user,
+            rx.vstack(
+                rx.text(f"Welcome {AppState.selected_user['name']}!"),
+                rx.text(f"Email: {AppState.selected_user['email']}"),
+                rx.text(f"Username: {AppState.selected_user['username']}"),
+                rx.text(f"id: {AppState.selected_user['id']}"),
+            ),
+            rx.text("Loading user data...")
+        ),
         padding="4",
     )
 
@@ -420,3 +569,16 @@ disperse_users_into_roles()
 seed_events()
 seed_one_attendee()
 seed_perks()
+
+# TODO
+# organiser portal
+# -> make event
+# -> see made events
+# -> array of registration per event
+# --> approve / disapporve registration
+
+# attender portal
+# -> search event by term
+# -> perks on event
+# -> book tickets and ticket perks
+# -> or approve reigstration, get tickets
