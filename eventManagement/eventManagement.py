@@ -200,6 +200,8 @@ class DashboardState(AppState):
         if event:
             self.selected_event = event.to_dict()
             return rx.redirect("/event-detail")
+        else:
+            print("ERROR: Event is None when expected not to be.")
 
 
 class LoginLogic(AppState):
@@ -249,7 +251,7 @@ class CreateAccount(AppState):
         correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
         print(correctDetails)
         if (correctDetails):
-        # if (correctDetails == True):
+            # if (correctDetails == True):
             print("good made user")
             # user = UserServices.get_user_by_username(username)
             print(correctDetails)
@@ -370,7 +372,8 @@ def dashboard():
                             rx.text(event["age_range"]),
                         ),
                         height="25vh",
-                        on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
+                        on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                        # on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
                     )
                 ),
                 columns="3",
@@ -396,28 +399,30 @@ def dashboard():
 #     )
 
 
-class EventInnards(AppState):
-    # events: list[dict] = []
+class EventInnards(DashboardState):
     perks: list[dict] = []
-    selected_event: dict | None = None
-    event_id : int
+    event_id: int
 
-    # @rx.event
-    # async def fetch_and_redirect(self, event_id: int):
-    #     from eventManagement.services.eventServices import EventServices
-    #     event = EventServices.get_event_by_id(event_id)
-    #     if event:
-    #         self.selected_event = event.to_dict()
-    #         perks_temp = EventServices.get_event_perks_from_event_id(event_id)
-    #         self.perks =[perk.to_dict() for perk in perks_temp]
+    @rx.event
+    async def fetch_and_redirect(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks = [perk.to_dict() for perk in perks_temp]
+            return rx.redirect("/event-detail")
+        else:
+            print("ERROR: Event is None when expected not to be.")
+
 
 @rx.page(route="/event-detail")
 def event_detail():
     event = DashboardState.selected_event
+
     # perks = EventInnards.get_perks()
     # id = DashboardState.selected_event['id']
     # EventInnards.get_perks()
-
 
     # return rx.container(
     #     rx.heading(event["name"]),
@@ -508,7 +513,6 @@ def organiser_portal():
     )
 
 
-
 class UserHomePage(AppState):
     attending_events: list[dict] = []
 
@@ -566,8 +570,8 @@ def user_home_page():
                                 rx.text(event["date"]),
                             ),
                             height="25vh",
-                            on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
-                            # on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                            # on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
+                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
                         )
                     ),
                     columns="2",
@@ -588,7 +592,6 @@ def user_home_page():
             rx.text("No upcoming events."),
         )
     )
-
 
 
 def navbar_link(text: str, url: str) -> rx.Component:
