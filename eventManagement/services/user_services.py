@@ -18,8 +18,10 @@ class UserServices(rx.State):
 
     @staticmethod
     def get_attendee_by_id(attendee_id: int) -> Attendee | None:
-        with rx.session() as session:
-            return session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
+        with (rx.session() as session):
+            return session.exec(
+                Attendee.select().where(Attendee.id == attendee_id)
+            ).first()
 
     @staticmethod
     def get_attending_events(attendee_id: int):

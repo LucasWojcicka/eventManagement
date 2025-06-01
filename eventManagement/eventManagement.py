@@ -3,6 +3,7 @@ import datetime
 import reflex as rx
 import sqlalchemy
 
+from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import Event
 from eventManagement.models.seed_data import seed_users, seed_perks
 from eventManagement.models.seed_data import disperse_users_into_roles
@@ -120,6 +121,8 @@ class AppState(rx.State):
     """The app state."""
     current_user_id: int = -1
     selected_user: dict | None = None
+    # selected_user: User
+    # attendee_from_user: Attendee
     # current_user: User
     ...
 
@@ -130,6 +133,16 @@ class AppState(rx.State):
             user = UserServices.get_user_by_id(self.current_user_id)
             if user:
                 self.selected_user = user.to_dict()
+                # self.selected_user = user
+
+    @rx.event
+    async def get_attendee_from_base_user(self):
+        from eventManagement.services.user_services import UserServices
+        if self.current_user_id:
+            attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
+            if attendee:
+                self.selected_user = attendee.to_dict()
+                # self.attendee_from_user = attendee
 
     @rx.event
     def setUser(self, user_id: int):
@@ -392,22 +405,79 @@ def event_detail():
 # #         # rx.text(f"Welcome {user.name} !"),
 # #         padding="4",
 # #     )
+# @rx.page(route="/home", on_load=AppState.fetch_current_user)
+# def user_home_page():
+#     return rx.container(
+#         home_header(),
+#         rx.heading("User Home"),
+#         rx.cond(
+#             AppState.selected_user,
+#             rx.vstack(
+#                 rx.text(f"Welcome {AppState.selected_user['name']}!"),
+#                 rx.text(f"Email: {AppState.selected_user['email']}"),
+#                 rx.text(f"Username: {AppState.selected_user['username']}"),
+#                 rx.text(f"id: {AppState.selected_user['id']}"),
+#             ),
+#             rx.text("Loading user data...")
+#         ),
+#         padding="4",
+#     )
+
+# class Balls(AppState):
+#     form_data: dict = {}
 @rx.page(route="/home", on_load=AppState.fetch_current_user)
 def user_home_page():
-    return rx.container(
-        rx.heading("User Home"),
-        rx.cond(
-            AppState.selected_user,
-            rx.vstack(
-                rx.text(f"Welcome {AppState.selected_user['name']}!"),
-                rx.text(f"Email: {AppState.selected_user['email']}"),
-                rx.text(f"Username: {AppState.selected_user['username']}"),
-                rx.text(f"id: {AppState.selected_user['id']}"),
+    # def user_home_page(self):
+        # user_id = int(AppState.current_user_id)
+        # users_attending_events = UserServices.get_attending_events(user_id)
+        # UserServices.get_attendee_from_base_user(AppState.selected_user.id)
+        # self.get_attendee_from_base_user()
+
+        return rx.container(
+            home_header(),
+            rx.cond(
+                AppState.selected_user,
+                rx.card(
+                    rx.vstack(
+                        rx.heading(f"Welcome {AppState.selected_user['name']}!"),
+                        rx.text(f"Email: {AppState.selected_user['email']}"),
+                        rx.text(f"Username: {AppState.selected_user['username']}"),
+                        rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
+                        align="start",
+                        spacing="2",
+                    ),
+                    shadow="md",
+                    padding="4",
+                    border_radius="5xl",
+                ),
+                # rx.grid(
+                #     rx.foreach(
+                #         # users_attending_events,
+                #         # lambda event: rx.card(
+                #         #     rx.text(event["name"]),rx.text(event["event_type"]),
+                #         #     height="10vh"
+                #         # ),
+                #         lambda event: rx.card(
+                #             rx.vstack(
+                #                 rx.text(f"{event['name']} {event['event_type']}", font_weight="bold"),
+                #                 rx.text(event["location"], font_style="italic"),
+                #                 # rx.text(event["date"].strftime("%d/%m/%Y - %H:%M"), font_weight="bold"),
+                #                 rx.text(event["age_range"]),
+                #             ),
+                #             height="25vh",
+                #             on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
+                #         )
+                #     ),
+                #     columns="3",
+                #     spacing="4",
+                #     width="100%",
+                # )
+
+                # rx.text("Loading user data...")
             ),
-            rx.text("Loading user data...")
-        ),
-        padding="4",
-    )
+
+            padding="4",
+        )
 
 
 def navbar_link(text: str, url: str) -> rx.Component:
@@ -443,6 +513,59 @@ def header() -> rx.Component:
                     justify="center"
                 ),
                 login_logic(),
+                # rx.hstack(
+                #     rx.dialog.root(
+                #         rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),
+                #         createAccountDialog()
+                #     ),
+                #     rx.dialog.root(
+                #         rx.dialog.trigger(rx.button("Login", size="3")),
+                #         loginDialog()
+                #     ),
+                # ),
+                spacing="1",
+                justify="between",
+                align="center"
+            ),
+            justify="between",
+            align_items="center",
+        ),
+        bg=rx.color("accent", 3),
+        padding="1em",
+        width="100%",
+    )
+
+
+organiser_portal_now = False;
+
+
+def home_header() -> rx.Component:
+    return rx.box(
+        rx.color_mode.button(position="top-right"),
+        rx.desktop_only(
+            rx.hstack(
+                rx.hstack(
+                    rx.image(
+                        src="/logo.jpg",
+                        width="2.25em",
+                        height="auto",
+                        border_radius="25%",
+                    ),
+                    rx.heading(
+                        "Zen Planner", size="7", weight="bold"
+                    ),
+                    align_items="center",
+                ),
+                rx.hstack(
+                    navbar_link("Home", "/home"),
+                    navbar_link("My Registrations", "/attendee_registrations"),
+                    navbar_link("My Events", "/attendee_events"),
+                    navbar_link("Organiser Portal", "/testing"),
+                    spacing="4",
+                    align_items="center",
+                    justify="center"
+                ),
+                # login_logic(),
                 # rx.hstack(
                 #     rx.dialog.root(
                 #         rx.dialog.trigger(rx.button("Create Account", size="3", variant="outline")),

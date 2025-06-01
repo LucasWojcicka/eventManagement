@@ -46,6 +46,15 @@ def seed_users():
             session.add(test_user)
             print(test_user)
             session.commit()
+        user = User(name="User User",
+                    email="user@mail.com",
+                    date_of_birth=fake.date_of_birth(),
+                    password="user",
+                    username="user",
+                    phone_number="1234")
+        session.add(user)
+        print(test_user)
+        session.commit()
 
 
 def disperse_users_into_roles():
