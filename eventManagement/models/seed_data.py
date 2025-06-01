@@ -196,6 +196,22 @@ def seed_all_attendees():
 
         session.commit()
 
+def seed_all_organisers():
+    with rx.session() as session:
+        session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))
+        session.commit()
+        all_organiser = session.exec(Organiser.select()).all()
+        all_events = session.exec(Event.select()).all()
+
+        for organiser in all_organiser:
+            num_events = random.randint(0, 3)
+
+            events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+
+            for event in events_to_add:
+                organiser.events.append(event)
+
+        session.commit()
 
 
 def seed_perks():

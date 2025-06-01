@@ -5,7 +5,7 @@ import sqlalchemy
 
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import Event
-from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees
+from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees, seed_all_organisers
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
@@ -248,15 +248,16 @@ class CreateAccount(AppState):
         phone = formData.get("phone_number")
         correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
         print(correctDetails)
-        if (correctDetails == True):
+        if (correctDetails):
+        # if (correctDetails == True):
             print("good made user")
-            user = UserServices.get_user_by_username(username)
-            print(user)
-            user_id = user.id
+            # user = UserServices.get_user_by_username(username)
+            print(correctDetails)
+            # user_id = co-rrectDetails.id
             # setUser(AppState, user_id)
-            self.current_user_id = user_id
+            self.current_user_id = correctDetails.id
 
-            yield rx.redirect("/home/")
+            yield rx.redirect("/home")
             # LoginLogic.handleSubmit(self,formData)
         #     user = UserServices.get_user_by_id(username)
         #     State.user_id = user.id
@@ -394,19 +395,143 @@ def dashboard():
 #         padding="4",
 #     )
 
+
+class EventInnards(AppState):
+    # events: list[dict] = []
+    perks: list[dict] = []
+    selected_event: dict | None = None
+    event_id : int
+
+    @rx.event
+    async def fetch_and_redirect(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks =[perk.to_dict() for perk in perks_temp]
+
+
+            # return rx.redirect("/event-detail")
+    # @rx.event
+    # async def get_perks(self, event_id):
+    #     # self.fetch_current_user()
+    #     # event_id = DashboardState.selected_event['id']
+    #     from eventManagement.services.eventServices import EventServices
+    #     event = EventServices.get_event_by_id(event_id)
+    #     event_perks = EventServices.get_event_perks_from_event_id(self.event_id)
+    #     self.event_perks =  [perk.to_dict() for perk in event_perks]
+    #     print("BALLS")
+    #     print(event.price_range_lowest)
+
+        # events = UserServices.get_attending_events(attendee.id)
+        # events = attendee.events
+        # self.attending_events = [event.to_dict() for event in events]
+        # self.attending_events = events
+        # self.attending_events = [event.to_dict() for event in events]
+        # UserServices.get
+        # self.attending_events = [event.to_dict() for event in attendee.events]
+        # self.fetch_current_user()
+        print("GOD GOD GOD GOD")
+        #
+
 @rx.page(route="/event-detail")
 def event_detail():
     event = DashboardState.selected_event
+    # perks = EventInnards.get_perks()
+    # id = DashboardState.selected_event['id']
+    # EventInnards.get_perks()
 
+
+    # return rx.container(
+    #     rx.heading(event["name"]),
+    #     rx.text(f"Type: {event['event_type']}"),
+    #     rx.text(f"Location: {event['location']}"),
+    #     rx.text(f"Date: {event['date']}"),
+    #     rx.text(f"Age Range: {event['age_range']}"),
+    #     rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+    #     padding="4",
+    # )
     return rx.container(
-        rx.heading(event["name"]),
-        rx.text(f"Type: {event['event_type']}"),
-        rx.text(f"Location: {event['location']}"),
-        rx.text(f"Date: {event['date']}"),
-        rx.text(f"Age Range: {event['age_range']}"),
-        rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
-        padding="4",
+        rx.card(
+            rx.vstack(
+                rx.heading(event["name"], size="4"),
+                rx.text(f"Type: {event['event_type']}"),
+                rx.text(f"Location: {event['location']}"),
+                rx.text(f"Date: {event['date']}"),
+                rx.text(f"Age Range: {event['age_range']}"),
+                spacing="3",
+                align="start"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="3xl",
+            margin_bottom="6",
+        ),
+
+        rx.heading("Perks", size="4", margin_bottom="2"),
+        rx.grid(
+            rx.foreach(
+                EventInnards.perks,
+                lambda perk: rx.card(
+                    rx.vstack(
+                        rx.text(perk["name"], font_weight="bold"),
+                        rx.text(f"Price: ${perk['price']}"),
+                        rx.text(f"Description: {perk['description']}"),
+                        rx.text(f"Age Range: {perk['age_range']}"),
+                        rx.text(f"Duration: {perk['duration']}"),
+                        rx.text(f"Available Slots: {perk['available_slots']}"),
+                        spacing="2",
+                        align="start"
+                    ),
+                    padding="4",
+                    shadow="sm",
+                    border_radius="xl",
+                )
+            ),
+            columns="2",
+            spacing="4",
+            width="100%",
+            margin_bottom="6",
+        ),
+
+        rx.button(
+            "Book Event",
+            # on_click=DashboardState.book_selected_event,
+            color_scheme="green",
+            size="4"
+        ),
+
+        padding="6",
+        spacing="6"
     )
+
+
+# class OrganiserPortal(AppState):
+
+@rx.page(route="/organiser_portal")
+def organiser_portal():
+    AppState.fetch_current_user()
+    return rx.container(
+        home_header(),
+
+        rx.card(
+            # AppState.selected_user,
+            rx.vstack(
+                rx.heading(f"Welcome {AppState.selected_user['name']} to your Organiser Portal!"),
+                rx.text(f"Email: {AppState.selected_user['email']}"),
+                rx.text(f"Username: {AppState.selected_user['username']}"),
+                rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
+                align="start",
+                spacing="2",
+            ),
+            shadow="md",
+            padding="4",
+            border_radius="5xl",
+        )
+    )
+
+
 
 class UserHomePage(AppState):
     attending_events: list[dict] = []
@@ -429,6 +554,7 @@ class UserHomePage(AppState):
         # self.fetch_current_user()
         print("GOD GOD GOD GOD")
 
+
 @rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)
 def user_home_page():
     AppState.fetch_current_user()
@@ -449,32 +575,44 @@ def user_home_page():
             padding="4",
             border_radius="5xl",
         ),
-
         rx.cond(
             UserHomePage.attending_events,
-            rx.grid(
-                rx.foreach(
-                    UserHomePage.attending_events,
-                    lambda event: rx.card(
-                        rx.vstack(
-                            rx.text(event["name"], font_weight="bold"),
-                            rx.text(event["event_type"]),
-                            rx.text(event["location"]),
-                            rx.text(event["date"]),
-                        ),
-                        height="25vh",
-                    )
+            rx.vstack(
+                rx.heading("Your Attending Events", size="4", padding_bottom="2"),
+                rx.grid(
+                    rx.foreach(
+                        UserHomePage.attending_events,
+                        lambda event: rx.card(
+                            rx.vstack(
+                                rx.text(event["name"], font_weight="bold"),
+                                rx.text(event["event_type"]),
+                                rx.text(event["location"]),
+                                rx.text(event["date"]),
+                            ),
+                            height="25vh",
+                            # on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
+                            on_click=lambda e=event: EventInnards.fetch_and_redirect(e["id"])
+                        )
+                    ),
+                    columns="2",
+                    spacing="4",
+                    width="100%",
                 ),
-                columns="2",
+                rx.button(
+                    "Browse More Events",
+                    on_click=rx.redirect("/dashboard"),
+                    color_scheme="blue",
+                    size="3",
+                    margin_top="4"
+                ),
+                align="start",
                 spacing="4",
-                width="100%",
                 padding_top="4",
             ),
-            rx.text("No upcoming events.")
-        ),
-
-        padding="4",
+            rx.text("No upcoming events."),
+        )
     )
+
 
 
 def navbar_link(text: str, url: str) -> rx.Component:
@@ -501,7 +639,7 @@ def header() -> rx.Component:
                     align_items="center",
                 ),
                 rx.hstack(
-                    navbar_link("Home", "/"),
+                    navbar_link("Home", "/home"),
                     navbar_link("About", "/about"),
                     navbar_link("Dashboard", "/dashboard"),
                     navbar_link("Purely Testing", "/testing"),
@@ -557,7 +695,7 @@ def home_header() -> rx.Component:
                     navbar_link("Home", "/home"),
                     navbar_link("My Registrations", "/attendee_registrations"),
                     navbar_link("My Events", "/attendee_events"),
-                    navbar_link("Organiser Portal", "/testing"),
+                    navbar_link("Organiser Portal", "/organiser_portal"),
                     spacing="4",
                     align_items="center",
                     justify="center"
@@ -688,7 +826,8 @@ seed_users()
 disperse_users_into_roles()
 seed_events()
 seed_one_attendee()
-# seed_all_attendees()
+seed_all_attendees()
+seed_all_organisers()
 seed_perks()
 
 # TODO

@@ -12,6 +12,7 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 from sqlmodel import Field, Relationship
 from typing import Optional, List
 
+
 # from eventManagement.models.event_links import EventTiers, EventRegistrations
 # from eventManagement.models.event_links import EventTiers
 
@@ -54,6 +55,18 @@ class Perk(rx.Model, table=True):
     )
     event: "Event" = Relationship(
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "price" : self.price,
+            "description" : self.description,
+            "age_range" : self.age_range,
+            "duration" : self.duration,
+            "available_slots" : self.available_slots,
+            "event_id" : self.event_id
+        }
 
 
 class Registration(rx.Model, table=True):
