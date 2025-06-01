@@ -179,6 +179,24 @@ def seed_one_attendee():
         one_attendee.events.append(one_event)
         session.commit()
 
+def seed_all_attendees():
+    with rx.session() as session:
+        session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
+        session.commit()
+        all_attendees = session.exec(Attendee.select()).all()
+        all_events = session.exec(Event.select()).all()
+
+        for attendee in all_attendees:
+            num_events = random.randint(1, 5)
+
+            events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+
+            for event in events_to_add:
+                attendee.events.append(event)
+
+        session.commit()
+
+
 
 def seed_perks():
     with rx.session() as session:

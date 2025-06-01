@@ -5,7 +5,7 @@ import sqlalchemy
 
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import Event
-from eventManagement.models.seed_data import seed_users, seed_perks
+from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
@@ -211,14 +211,19 @@ class LoginLogic(AppState):
         username = formData.get("user_name")
         password = formData.get("pass_word")
         print(username + " " + password)
-        correctDetails = UserServices.login_user(username, password)
-        print(correctDetails)
-        if (correctDetails == True):
-            user = UserServices.get_user_by_username(username)
-            print(user)
-            user_id = user.id
+        logged_in_user = UserServices.login_user(username, password)
+        # correctDetails = UserServices.login_user(username, password)
+        # print(correctDetails)
+        # if (correctDetails == True):
+        if (logged_in_user):
+            # user = UserServices.get_user_by_username(username)
+            # print(user)
+            # user_id = user.id
+            self.selected_user = logged_in_user
             # setUser(AppState, user_id)
-            self.current_user_id = user_id
+
+            self.current_user_id = logged_in_user.id
+            # self.current_user_id = user_id
             # AppState.current_user_id = user_id
             # LoginLogic.father_state.setUser(State, user_id)
             # rx.session().set("user_id", user.id)
@@ -421,6 +426,7 @@ class UserHomePage(AppState):
         # self.attending_events = [event.to_dict() for event in events]
         # UserServices.get
         # self.attending_events = [event.to_dict() for event in attendee.events]
+        # self.fetch_current_user()
         print("GOD GOD GOD GOD")
 
 @rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)
@@ -682,6 +688,7 @@ seed_users()
 disperse_users_into_roles()
 seed_events()
 seed_one_attendee()
+# seed_all_attendees()
 seed_perks()
 
 # TODO

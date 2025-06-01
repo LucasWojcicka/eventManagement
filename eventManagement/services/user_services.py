@@ -161,10 +161,12 @@ class UserServices(rx.State):
             user = session.exec(User.select().where(User.username == username and User.password == password)).first()
             if (user is not None):
                 print("nuh uh")
-                return True
+                # return True
+                return user
             else:
                 print("rklsdhfsd")
-                return False
+                # return False
+                return None
 # login user, make event, unmake-event, attend event, un-attend event
 
 # class AddUser(rx.State):
