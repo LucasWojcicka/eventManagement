@@ -104,6 +104,14 @@ async def get_attended_events(base_user_id: int):
     # return events
 
 
+@fastapi_app.get("/api/get_organised_events")
+async def get_organised_events(base_user_id: int):
+    from eventManagement.services.user_services import UserServices
+    organiser = UserServices.get_organiser_from_base_user(base_user_id)
+    return organiser.events
+    # return events
+
+
 @fastapi_app.get("/api/get_event_perks")
 async def get_event_perks(event_id: int):
     from eventManagement.services.eventServices import EventServices
@@ -475,7 +483,6 @@ def event_detail():
             width="100%",
             margin_bottom="6",
         ),
-
         rx.button(
             "Book Event",
             # on_click=DashboardState.book_selected_event,
@@ -487,11 +494,30 @@ def event_detail():
         spacing="6"
     )
 
+class OrganiserPortal(AppState):
+    organised_events: list[dict] = []
 
-# class OrganiserPortal(AppState):
+    # attending_events: list[dict] = []
 
-@rx.page(route="/organiser_portal")
-def organiser_portal():
+    @rx.event
+    async def kill_kill_murder_murder(self):
+        # self.fetch_current_user()
+        from eventManagement.services.user_services import UserServices
+        organiser = UserServices.get_organiser_from_base_user(self.current_user_id)
+
+        events = UserServices.get_attending_events(organiser.id)
+        # events = attendee.events
+        self.organised_events = [event.to_dict() for event in events]
+        # self.attending_events = events
+        # self.attending_events = [event.to_dict() for event in events]
+        # UserServices.get
+        # self.attending_events = [event.to_dict() for event in attendee.events]
+        # self.fetch_current_user()
+        print("GOD GOD GOD GOD")
+
+
+@rx.page(route="/organiser_portal", on_load=OrganiserPortal.kill_kill_murder_murder)
+def user_home_page():
     AppState.fetch_current_user()
     return rx.container(
         home_header(),
@@ -499,7 +525,7 @@ def organiser_portal():
         rx.card(
             # AppState.selected_user,
             rx.vstack(
-                rx.heading(f"Welcome {AppState.selected_user['name']} to your Organiser Portal!"),
+                rx.heading(f"Welcome {AppState.selected_user['name']}!"),
                 rx.text(f"Email: {AppState.selected_user['email']}"),
                 rx.text(f"Username: {AppState.selected_user['username']}"),
                 rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
@@ -509,6 +535,43 @@ def organiser_portal():
             shadow="md",
             padding="4",
             border_radius="5xl",
+        ),
+        rx.cond(
+            OrganiserPortal.organised_events,
+            rx.vstack(
+                rx.heading("Your Organised Events", size="4", padding_bottom="2"),
+                rx.grid(
+                    rx.foreach(
+                        OrganiserPortal.organised_events,
+                        lambda event: rx.card(
+                            rx.vstack(
+                                rx.text(event["name"], font_weight="bold"),
+                                rx.text(event["event_type"]),
+                                rx.text(event["location"]),
+                                rx.text(event["date"]),
+                            ),
+                            height="25vh",
+                            # on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
+                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                        )
+                    ),
+                    columns="2",
+                    spacing="4",
+                    width="100%",
+                ),
+                rx.button(
+                    "Create New Event",
+                    # on_click=rx.redirect("/dashboard"),
+                    color_scheme="blue",
+                    size="3",
+                    margin_top="4"
+                ),
+                align="start",
+                spacing="4",
+                padding_top="4",
+            ),
+            rx.text("No organised events."),
+
         )
     )
 

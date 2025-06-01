@@ -51,10 +51,11 @@ class UserServices(rx.State):
 
     @staticmethod
     def get_organised_events(organiser_id: int):
-        print("get attending events")
+        print("get ORGANISED events")
         with rx.session() as session:
             organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
             organised_events = organiser.events
+            print(len(organised_events))
             return organised_events
 
     @staticmethod
