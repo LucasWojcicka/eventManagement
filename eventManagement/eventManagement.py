@@ -402,38 +402,14 @@ class EventInnards(AppState):
     selected_event: dict | None = None
     event_id : int
 
-    @rx.event
-    async def fetch_and_redirect(self, event_id: int):
-        from eventManagement.services.eventServices import EventServices
-        event = EventServices.get_event_by_id(event_id)
-        if event:
-            self.selected_event = event.to_dict()
-            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
-            self.perks =[perk.to_dict() for perk in perks_temp]
-
-
-            # return rx.redirect("/event-detail")
     # @rx.event
-    # async def get_perks(self, event_id):
-    #     # self.fetch_current_user()
-    #     # event_id = DashboardState.selected_event['id']
+    # async def fetch_and_redirect(self, event_id: int):
     #     from eventManagement.services.eventServices import EventServices
     #     event = EventServices.get_event_by_id(event_id)
-    #     event_perks = EventServices.get_event_perks_from_event_id(self.event_id)
-    #     self.event_perks =  [perk.to_dict() for perk in event_perks]
-    #     print("BALLS")
-    #     print(event.price_range_lowest)
-
-        # events = UserServices.get_attending_events(attendee.id)
-        # events = attendee.events
-        # self.attending_events = [event.to_dict() for event in events]
-        # self.attending_events = events
-        # self.attending_events = [event.to_dict() for event in events]
-        # UserServices.get
-        # self.attending_events = [event.to_dict() for event in attendee.events]
-        # self.fetch_current_user()
-        print("GOD GOD GOD GOD")
-        #
+    #     if event:
+    #         self.selected_event = event.to_dict()
+    #         perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+    #         self.perks =[perk.to_dict() for perk in perks_temp]
 
 @rx.page(route="/event-detail")
 def event_detail():
@@ -590,8 +566,8 @@ def user_home_page():
                                 rx.text(event["date"]),
                             ),
                             height="25vh",
-                            # on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
-                            on_click=lambda e=event: EventInnards.fetch_and_redirect(e["id"])
+                            on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
+                            # on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
                         )
                     ),
                     columns="2",
