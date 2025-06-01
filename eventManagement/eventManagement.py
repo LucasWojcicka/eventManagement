@@ -74,6 +74,13 @@ async def get_user_by_id(user_id: int):
     return user
 
 
+@fastapi_app.get("/api/get_attendee_by_user_id")
+async def get_user_by_id(user_id: int):
+    from eventManagement.services.user_services import UserServices
+    attendee = UserServices.get_attendee_from_base_user(user_id)
+    return attendee
+
+
 @fastapi_app.get("/api/get_user_by_username")
 async def get_user_by_id(username: str):
     from eventManagement.services.user_services import UserServices
@@ -83,9 +90,17 @@ async def get_user_by_id(username: str):
 
 @fastapi_app.get("/api/get_attendee_events")
 async def get_attended_events(attendee_id: int):
-    from eventManagement.services.eventServices import EventServices
-    attendee = EventServices.get_attending_events(attendee_id)
-    return attendee
+    from eventManagement.services.user_services import UserServices
+    attendee = UserServices.get_attending_events(attendee_id)
+    # return attendee.events
+    # return events
+
+
+@fastapi_app.get("/api/get_attendee_events_NEW")
+async def get_attended_events(base_user_id: int):
+    from eventManagement.services.user_services import UserServices
+    attendee = UserServices.get_attendee_from_base_user(base_user_id)
+    return attendee.events
     # return events
 
 
@@ -388,96 +403,72 @@ def event_detail():
         padding="4",
     )
 
+class UserHomePage(AppState):
+    attending_events: list[dict] = []
 
-# @rx.page(route="/home")
-# # def user_home_page():
-# #     # user_id = int(AppState.current_user_id)
-# #     # user = UserServices.get_user_by_id(AppState.current_user_id)
-# #     # print(AppState.current_user_id)
-# #     # print(UserServices.get_user_by_id(AppState.current_user_id).name)
-# #     # print(AppState.current_user)
-# #
-# #     print("BALLLS")
-# #     print(AppState.current_user_id)
-# #     return rx.container(
-# #         # rx.heading(str(user.id)),
-# #         rx.heading(AppState.current_user_id),
-# #         # rx.text(f"Welcome {user.name} !"),
-# #         padding="4",
-# #     )
-# @rx.page(route="/home", on_load=AppState.fetch_current_user)
-# def user_home_page():
-#     return rx.container(
-#         home_header(),
-#         rx.heading("User Home"),
-#         rx.cond(
-#             AppState.selected_user,
-#             rx.vstack(
-#                 rx.text(f"Welcome {AppState.selected_user['name']}!"),
-#                 rx.text(f"Email: {AppState.selected_user['email']}"),
-#                 rx.text(f"Username: {AppState.selected_user['username']}"),
-#                 rx.text(f"id: {AppState.selected_user['id']}"),
-#             ),
-#             rx.text("Loading user data...")
-#         ),
-#         padding="4",
-#     )
+    # attending_events: list[dict] = []
 
-# class Balls(AppState):
-#     form_data: dict = {}
-@rx.page(route="/home", on_load=AppState.fetch_current_user)
+    @rx.event
+    async def kill_kill_murder_murder(self):
+        # self.fetch_current_user()
+        from eventManagement.services.user_services import UserServices
+        attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
+
+        events = UserServices.get_attending_events(attendee.id)
+        # events = attendee.events
+        self.attending_events = [event.to_dict() for event in events]
+        # self.attending_events = events
+        # self.attending_events = [event.to_dict() for event in events]
+        # UserServices.get
+        # self.attending_events = [event.to_dict() for event in attendee.events]
+        print("GOD GOD GOD GOD")
+
+@rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)
 def user_home_page():
-    # def user_home_page(self):
-        # user_id = int(AppState.current_user_id)
-        # users_attending_events = UserServices.get_attending_events(user_id)
-        # UserServices.get_attendee_from_base_user(AppState.selected_user.id)
-        # self.get_attendee_from_base_user()
+    AppState.fetch_current_user()
+    return rx.container(
+        home_header(),
 
-        return rx.container(
-            home_header(),
-            rx.cond(
-                AppState.selected_user,
-                rx.card(
-                    rx.vstack(
-                        rx.heading(f"Welcome {AppState.selected_user['name']}!"),
-                        rx.text(f"Email: {AppState.selected_user['email']}"),
-                        rx.text(f"Username: {AppState.selected_user['username']}"),
-                        rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
-                        align="start",
-                        spacing="2",
-                    ),
-                    shadow="md",
-                    padding="4",
-                    border_radius="5xl",
-                ),
-                # rx.grid(
-                #     rx.foreach(
-                #         # users_attending_events,
-                #         # lambda event: rx.card(
-                #         #     rx.text(event["name"]),rx.text(event["event_type"]),
-                #         #     height="10vh"
-                #         # ),
-                #         lambda event: rx.card(
-                #             rx.vstack(
-                #                 rx.text(f"{event['name']} {event['event_type']}", font_weight="bold"),
-                #                 rx.text(event["location"], font_style="italic"),
-                #                 # rx.text(event["date"].strftime("%d/%m/%Y - %H:%M"), font_weight="bold"),
-                #                 rx.text(event["age_range"]),
-                #             ),
-                #             height="25vh",
-                #             on_click=lambda e=event: DashboardState.fetch_and_redirect(e["id"])
-                #         )
-                #     ),
-                #     columns="3",
-                #     spacing="4",
-                #     width="100%",
-                # )
-
-                # rx.text("Loading user data...")
+        rx.card(
+            # AppState.selected_user,
+            rx.vstack(
+                rx.heading(f"Welcome {AppState.selected_user['name']}!"),
+                rx.text(f"Email: {AppState.selected_user['email']}"),
+                rx.text(f"Username: {AppState.selected_user['username']}"),
+                rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
+                align="start",
+                spacing="2",
             ),
-
+            shadow="md",
             padding="4",
-        )
+            border_radius="5xl",
+        ),
+
+        rx.cond(
+            UserHomePage.attending_events,
+            rx.grid(
+                rx.foreach(
+                    UserHomePage.attending_events,
+                    lambda event: rx.card(
+                        rx.vstack(
+                            rx.text(event["name"], font_weight="bold"),
+                            rx.text(event["event_type"]),
+                            rx.text(event["location"]),
+                            rx.text(event["date"]),
+                        ),
+                        height="25vh",
+                    )
+                ),
+                columns="2",
+                spacing="4",
+                width="100%",
+                padding_top="4",
+            ),
+            rx.text("No upcoming events.")
+        ),
+
+        padding="4",
+    )
 
 
 def navbar_link(text: str, url: str) -> rx.Component:

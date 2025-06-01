@@ -29,6 +29,7 @@ class UserServices(rx.State):
         with rx.session() as session:
             attendee = session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
             attending_events = attendee.events
+            print(len(attending_events))
             return attending_events
 
     @staticmethod
