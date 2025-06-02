@@ -435,6 +435,18 @@ class EventInnards(DashboardState):
         else:
             print("ERROR: Event is None when expected not to be.")
 
+    @rx.event
+    async def fetch_and_redirect_organised_event(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks = [perk.to_dict() for perk in perks_temp]
+            return rx.redirect("/organised-event-detail")
+        else:
+            print("ERROR: Event is None when expected not to be.")
+
 
 @rx.page(route="/event-detail")
 def event_detail():
@@ -507,6 +519,89 @@ def event_detail():
     )
 
 
+# class Organised_Events_Details(AppState):
+#     attenders : list[dict] = []
+#     events: dict | None = None
+#
+#
+#
+#     @rx.event
+#     async def get_attenders(self):
+#         self.event = DashboardState.selected_event
+#         attenders_temp = EventServices.get_attenders(self.event['id'])
+#         self.attenders = [attendee.to_dict() for attendee in attenders_temp]
+#         self.events = EventServices.get_attenders(self.event['id'])
+#         for attender in self.attenders:
+#             print(attender['name'])
+#
+#         print("meow")
+# @rx.page(route="/organised-event-detail", on_load=Organised_Events_Details.get_attenders())
+# def organised_event_detail():
+#     event = Organised_Events_Details.events
+@rx.page(route="/organised-event-detail")
+def event_detail():
+    event = DashboardState.selected_event
+    # attenders_temp = EventServices.get_attenders(event['id'])
+    # attenders = [attendee.to_dict() for attendee in attenders_temp]
+    # print(attenders)
+
+    # for i, attender in enumerate(attenders):
+    #     print(attender["user_id"])
+
+    return rx.container(
+        rx.card(
+            rx.vstack(
+                rx.heading(event["name"], size="4"),
+                rx.text(f"Type: {event['event_type']}"),
+                rx.text(f"Location: {event['location']}"),
+                rx.text(f"Date: {event['date']}"),
+                rx.text(f"Age Range: {event['age_range']}"),
+                spacing="3",
+                align="start"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="3xl",
+            margin_bottom="6",
+        ),
+
+        rx.heading("Perks", size="4", margin_bottom="2"),
+        rx.grid(
+            rx.foreach(
+                EventInnards.perks,
+                lambda perk: rx.card(
+                    rx.vstack(
+                        rx.text(perk["name"], font_weight="bold"),
+                        rx.text(f"Price: ${perk['price']}"),
+                        rx.text(f"Description: {perk['description']}"),
+                        rx.text(f"Age Range: {perk['age_range']}"),
+                        rx.text(f"Duration: {perk['duration']}"),
+                        rx.text(f"Available Slots: {perk['available_slots']}"),
+                        spacing="2",
+                        align="start"
+                    ),
+                    padding="4",
+                    shadow="sm",
+                    border_radius="xl",
+                )
+            ),
+            columns="2",
+            spacing="4",
+            width="100%",
+            margin_bottom="6",
+        ),
+        rx.button(
+            "Edit Event",
+            # on_click=DashboardState.book_selected_event,
+            color_scheme="blue",
+            size="4"
+        ),
+
+        padding="6",
+        spacing="6"
+    )
+
+
 class OrganiserPortal(AppState):
     organised_events: list[dict] = []
 
@@ -566,6 +661,7 @@ def user_home_page():
                             ),
                             height="25vh",
                             on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                            # on_click=lambda e=event: EventInnards.fetch_and_redirect_organised_event(event["id"])
                         )
                     ),
                     columns="2",
@@ -712,21 +808,11 @@ class CreateEvent(AppState):
         event_status = formData.get("status")
         age_range = str(low_age) + " to " + str(high_age)
         from eventManagement.services.eventServices import EventServices
-        # EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
-        #                            capacity)
-
-        newEventBALLS = EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
-                                   capacity,self.current_user_id)
+        newEventBALLS = EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range,
+                                                   event_status,
+                                                   capacity, self.current_user_id)
 
         self.event_created = True
-        # event = EventServices.exist_already_detailed(name, event_type, location, desc)
-
-        # UserServices.organise_event(self.current_user_id,
-        #                             EventServices.get_event(name, duration, event_type, date, location, 0, 0, desc,
-        #                                                     age_range, event_status,
-        #                                                     capacity))
-        # UserServices.organise_event(self.current_user_id,
-        #                             newEventBALLS)
         self.event_id = newEventBALLS.get("id")
         self.event_created = True
 
@@ -754,65 +840,6 @@ class CreateEvent(AppState):
                                    formData.get("perk_age_range_lowest")), formData.get("perk_slots"), self.event_id, )
 
         await self.load_perks()
-        # @rx.event
-    # async def load_perks(self):
-    #     from eventManagement.services.eventServices import EventServices
-    #     perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)  # synchronous
-    #     if perks_temp:
-    #         self.perks = [perk.to_dict() for perk in perks_temp]
-    #     else:
-    #         self.perks = []
-    #     # NO await self.refresh() here
-    #
-    # @rx.event
-    # async def make_event(self, formData: dict):
-    #     from datetime import datetime
-    #     from eventManagement.services.eventServices import EventServices
-    #
-    #     date_str = formData.get("date")
-    #     date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-    #     name = formData.get("name")
-    #     duration = formData.get("duration")
-    #     date = date_obj
-    #     location = formData.get("location")
-    #     desc = formData.get("description")
-    #     low_age = formData.get("low_age")
-    #     high_age = formData.get("high_age")
-    #     capacity = formData.get("capacity")
-    #     event_type = formData.get("type")
-    #     event_status = formData.get("status")
-    #     age_range = f"{low_age} to {high_age}"
-    #
-    #     EventServices.set_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
-    #                             capacity)
-    #
-    #     event = EventServices.exist_already_detailed(name, event_type, location, desc)
-    #     self.event_id = event.id
-    #     self.event_created = True
-    #
-    #     await self.load_perks()
-    #
-    # @rx.event
-    # async def handleSubmitOnNewPerk(self, formData: dict):
-    #     from eventManagement.services.eventServices import EventServices
-    #
-    #     if self.event_id < 0:
-    #         print("No event created yet, cannot add perk")
-    #         return
-    #
-    #     age_range = f"{formData.get('perk_age_range_lowest')} to {formData.get('perk_age_range_highest')}"
-    #
-    #     EventServices.set_perk(
-    #         formData.get("perk_name"),
-    #         formData.get("perk_duration"),
-    #         formData.get("perk_price"),
-    #         formData.get("perk_description"),
-    #         age_range,
-    #         formData.get("perk_slots"),
-    #         self.event_id,
-    #     )
-    #
-    #     await self.load_perks()
 
 
 def perkPopover():
@@ -963,16 +990,11 @@ class UserHomePage(AppState):
         # self.fetch_current_user()
         from eventManagement.services.user_services import UserServices
         attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
+        if attendee:
+            events = UserServices.get_attending_events(attendee.id)
+            # events = attendee.events
+            self.attending_events = [event.to_dict() for event in events]
 
-        events = UserServices.get_attending_events(attendee.id)
-        # events = attendee.events
-        self.attending_events = [event.to_dict() for event in events]
-        # self.attending_events = events
-        # self.attending_events = [event.to_dict() for event in events]
-        # UserServices.get
-        # self.attending_events = [event.to_dict() for event in attendee.events]
-        # self.fetch_current_user()
-        print("GOD GOD GOD GOD")
 
 
 @rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)

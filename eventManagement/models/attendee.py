@@ -1,5 +1,3 @@
-
-
 import reflex as rx
 from sqlmodel import Field, Relationship
 
@@ -13,3 +11,8 @@ class Attendee(rx.Model, table=True):
     events: list[Event] = Relationship(link_model=AttendeeEventLink)
     user: "User" = Relationship()
 
+    def to_dict(self):
+        return {
+            "user_id": self.user_id
+
+        }

@@ -210,45 +210,45 @@ class EventServices(rx.State):
             return new_event.to_dict()
 
 
-@staticmethod
-def exist_already(match: Event):
-    events = EventServices.get_all_events()
-    for event in events:
-        if (event.name == match.name and
-                event.date == match.date and
-                event.event_type == match.event_type and
-                event.location == match.location):
-            return event
-    return None
+    @staticmethod
+    def exist_already(match: Event):
+        events = EventServices.get_all_events()
+        for event in events:
+            if (event.name == match.name and
+                    event.date == match.date and
+                    event.event_type == match.event_type and
+                    event.location == match.location):
+                return event
+        return None
 
 
-@staticmethod
-def exist_already_detailed(name: str, type: str, location: str, description: str):
-    events = EventServices.get_all_events()
-    for event in events:
-        if (event.name == name and
-                event.location == location and
-                event.event_type == type and
-                event.description == description):
-            return event
-    return None
+    @staticmethod
+    def exist_already_detailed(name: str, type: str, location: str, description: str):
+        events = EventServices.get_all_events()
+        for event in events:
+            if (event.name == name and
+                    event.location == location and
+                    event.event_type == type and
+                    event.description == description):
+                return event
+        return None
 
 
-@staticmethod
-def set_perk(name: str, duration: int, price: int, description: str,
-             age_range: str, slots: int, id: int):
-    new_perk = Perk(name=name,
-                    duration=duration,
-                    price=price,
-                    description=description,
-                    age_range=age_range,
-                    available_slots=slots,
-                    event_id=id
-                    )
-    with rx.session() as session:
-        session.add(new_perk)
-        session.commit()
-    print("make_perk")
+    @staticmethod
+    def set_perk(name: str, duration: int, price: int, description: str,
+                 age_range: str, slots: int, id: int):
+        new_perk = Perk(name=name,
+                        duration=duration,
+                        price=price,
+                        description=description,
+                        age_range=age_range,
+                        available_slots=slots,
+                        event_id=id
+                        )
+        with rx.session() as session:
+            session.add(new_perk)
+            session.commit()
+        print("make_perk")
 
 
 @staticmethod
