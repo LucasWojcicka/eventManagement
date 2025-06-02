@@ -30,6 +30,10 @@ class EventType(Enum):
     def list():
         return list(map(lambda t: t, EventType))
 
+    @staticmethod
+    def to_dict():
+        return {e.value: e.value.capitalize() for e in EventType}
+
 
 class EventStatus(Enum):
     NORMAL = "normal"
@@ -39,6 +43,10 @@ class EventStatus(Enum):
     @staticmethod
     def list():
         return list(map(lambda t: t, EventStatus))
+
+    @staticmethod
+    def to_dict():
+        return {e.value: e.value.capitalize() for e in EventType}
 
 
 class Perk(rx.Model, table=True):
@@ -76,6 +84,7 @@ class Registration(rx.Model, table=True):
     description: str
     price: int
     approved: bool
+    user_id : int
     # approved: bool | None
     event_id: int = Field(
         default=None,

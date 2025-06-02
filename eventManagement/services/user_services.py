@@ -64,6 +64,12 @@ class UserServices(rx.State):
             organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
             return session.exec(User.select().where(User.id == organiser.user_id))
 
+    # @staticmethod
+    # def did_organiser_organise_this_event(organiser_id: int,event_id:int):
+    #     with rx.session() as session:
+    #         organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
+    #         return session.exec(User.select().where(User.id == organiser.user_id))
+
     # getters for user
     @staticmethod
     def get_user_by_id(user_id: int) -> User | None:

@@ -14,21 +14,23 @@ from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
 
 
+
+
 def seed_users():
     fake = Faker()
     print("seed users")
     with rx.session() as session:
-        # existing_data = session.exec(User.select()).first()
-        # if existing_data:
-        #     print(f"already data, pass: {existing_data}")
-        #     # session.exec(sqlalchemy.text("DELETE FROM User"))
-        #     # session.exec(sqlalchemy.text("VACUUM"))
-        #     # session.commit()
-        #     # return
-        # else:
-        engine = create_engine("sqlite:///reflex.db")
+        existing_data = session.exec(User.select()).first()
+        if existing_data:
+            print(f"already data, pass: {existing_data}")
+            session.exec(sqlalchemy.text("DELETE FROM User"))
+            # session.exec(sqlalchemy.text("VACUUM"))
+            session.commit()
+            # return
+        else:
+            engine = create_engine("sqlite:///reflex.db")
 
-        session.exec(sqlalchemy.text("DELETE FROM User"))
+        # session.exec(sqlalchemy.text("DELETE FROM User"))
         # session.exec(sqlalchemy.text("VACUUM"))
         session.commit()
         user = User(name="User User",
@@ -217,6 +219,7 @@ def seed_one_attendee():
 
 import random
 
+
 def seed_all_attendees():
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
@@ -255,7 +258,6 @@ def seed_all_organisers():
         session.commit()
 
 
-
 def seed_perks():
     with rx.session() as session:
         fake = Faker()
@@ -264,7 +266,7 @@ def seed_perks():
             for x in range(1, random.randrange(2, 6, 1)):
                 new_perk = Perk(
                     name=str(fake.word().title()) + " Experience",
-                    price=10,
+                    price=random.randrange(10, 200, 10),
                     description=fake.paragraph(1),
                     age_range=event.age_range,
                     duration=random.randrange(1, 5, 1),
