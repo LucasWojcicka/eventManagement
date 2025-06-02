@@ -43,8 +43,6 @@ async def get_events():
     return all_events
 
 
-
-
 # @fastapi_app.get("/api/login_user")
 # async def login_user(username, password):
 #     from eventManagement.services.user_services import UserServices
@@ -129,10 +127,13 @@ async def get_attended_events(event_id: int, event_name: str):
     return attendee
     # return events
 
+
 @fastapi_app.get("/api/make_event")
-async def make_event(name: str,duration: int, event_type: str, date: datetime, location:str, price_low :int, price_high: int, desc: str, age:str,attendee:int,status:str,capacity:int,occupied:int):
+async def make_event(name: str, duration: int, event_type: str, date: datetime, location: str, price_low: int,
+                     price_high: int, desc: str, age: str, attendee: int, status: str, capacity: int, occupied: int):
     from eventManagement.services.eventServices import EventServices
-    EventServices.set_event(name,duration,event_type,datetime.now(),location,price_low,price_high,desc,age,status,capacity)
+    # EventServices.create_event(name, duration, event_type, datetime.now(), location, price_low, price_high, desc, age,
+    #                            status, capacity)
     # return attendee
     # return events
 
@@ -519,7 +520,7 @@ class OrganiserPortal(AppState):
         from eventManagement.services.user_services import UserServices
         organiser = UserServices.get_organiser_from_base_user(self.current_user_id)
         if organiser:
-            events = UserServices.get_attending_events(organiser.id)
+            events = UserServices.get_organised_events(organiser.id)
             # events = attendee.events
             self.organised_events = [event.to_dict() for event in events]
         # self.attending_events = events
@@ -648,20 +649,42 @@ class CreateEvent(AppState):
     edit_perks_popover: bool = False
     event_created: bool = False
     form_data: dict = {}
+    event_id: int = -1
+    organised_events: list[dict] = []
 
     def mark_created(self):
         self.event_created = True
 
+    # TODO lazy load events, if no events organsied make organiser
     @rx.event
     async def balls(self):
         self.event_type = {e.value: e.value.capitalize() for e in EventType}
+        if self.event_id > 0:
+            await self.load_perks()
+        print("meow")
+        self.event_created = False;
+        from eventManagement.services.user_services import UserServices
+        organiser = UserServices.get_organiser_from_base_user(self.current_user_id)
+
+        if (organiser == None):
+            UserServices.make_organiser(self.current_user_id)
+        else:
+            events = UserServices.get_organised_events(organiser.id)
+            self.organised_events = [event.to_dict() for event in events]
 
         from eventManagement.services.eventServices import EventServices
         # perks_temp = EventServices.get_event_perks_from_event_id(0)
         # if perks_temp:
         # self.perks = [perk.to_dict() for perk in perks_temp]
 
-        print("meow")
+    @rx.event
+    async def load_perks(self):
+        from eventManagement.services.eventServices import EventServices
+        perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)
+        if perks_temp:
+            self.perks = [perk.to_dict() for perk in perks_temp]
+        else:
+            self.perks = []
 
     @rx.event
     async def make_event(self, formData: dict):
@@ -689,8 +712,25 @@ class CreateEvent(AppState):
         event_status = formData.get("status")
         age_range = str(low_age) + " to " + str(high_age)
         from eventManagement.services.eventServices import EventServices
-        EventServices.set_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
-                                capacity)
+        # EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
+        #                            capacity)
+
+        newEventBALLS = EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
+                                   capacity,self.current_user_id)
+
+        self.event_created = True
+        # event = EventServices.exist_already_detailed(name, event_type, location, desc)
+
+        # UserServices.organise_event(self.current_user_id,
+        #                             EventServices.get_event(name, duration, event_type, date, location, 0, 0, desc,
+        #                                                     age_range, event_status,
+        #                                                     capacity))
+        # UserServices.organise_event(self.current_user_id,
+        #                             newEventBALLS)
+        self.event_id = newEventBALLS.get("id")
+        self.event_created = True
+
+        await self.load_perks()
 
     @rx.event
     async def make_new_perk(self):
@@ -711,7 +751,68 @@ class CreateEvent(AppState):
         EventServices.set_perk(formData.get("perk_name"), formData.get("perk_duration"), formData.get("perk_price"),
                                formData.get("perk_description"),
                                str(formData.get("perk_age_range_highest")) + " to" + str(
-                                   formData.get("perk_age_range_lowest")), formData.get("perk_slots"))
+                                   formData.get("perk_age_range_lowest")), formData.get("perk_slots"), self.event_id, )
+
+        await self.load_perks()
+        # @rx.event
+    # async def load_perks(self):
+    #     from eventManagement.services.eventServices import EventServices
+    #     perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)  # synchronous
+    #     if perks_temp:
+    #         self.perks = [perk.to_dict() for perk in perks_temp]
+    #     else:
+    #         self.perks = []
+    #     # NO await self.refresh() here
+    #
+    # @rx.event
+    # async def make_event(self, formData: dict):
+    #     from datetime import datetime
+    #     from eventManagement.services.eventServices import EventServices
+    #
+    #     date_str = formData.get("date")
+    #     date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    #     name = formData.get("name")
+    #     duration = formData.get("duration")
+    #     date = date_obj
+    #     location = formData.get("location")
+    #     desc = formData.get("description")
+    #     low_age = formData.get("low_age")
+    #     high_age = formData.get("high_age")
+    #     capacity = formData.get("capacity")
+    #     event_type = formData.get("type")
+    #     event_status = formData.get("status")
+    #     age_range = f"{low_age} to {high_age}"
+    #
+    #     EventServices.set_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
+    #                             capacity)
+    #
+    #     event = EventServices.exist_already_detailed(name, event_type, location, desc)
+    #     self.event_id = event.id
+    #     self.event_created = True
+    #
+    #     await self.load_perks()
+    #
+    # @rx.event
+    # async def handleSubmitOnNewPerk(self, formData: dict):
+    #     from eventManagement.services.eventServices import EventServices
+    #
+    #     if self.event_id < 0:
+    #         print("No event created yet, cannot add perk")
+    #         return
+    #
+    #     age_range = f"{formData.get('perk_age_range_lowest')} to {formData.get('perk_age_range_highest')}"
+    #
+    #     EventServices.set_perk(
+    #         formData.get("perk_name"),
+    #         formData.get("perk_duration"),
+    #         formData.get("perk_price"),
+    #         formData.get("perk_description"),
+    #         age_range,
+    #         formData.get("perk_slots"),
+    #         self.event_id,
+    #     )
+    #
+    #     await self.load_perks()
 
 
 def perkPopover():
@@ -790,7 +891,7 @@ def create_event():
                 rx.form(
                     rx.vstack(
                         rx.input(placeholder="Event Name", name="name", width="100%"),
-                        rx.input(placeholder="Event Duration", name="duration",type="number", width="100%"),
+                        rx.input(placeholder="Event Duration", name="duration", type="number", width="100%"),
                         rx.select(
                             [e.value for e in EventType.list()],
                             name="type"
@@ -798,15 +899,15 @@ def create_event():
                         rx.input(placeholder="Event Date", name="date", type="date", width="100%"),
                         rx.input(placeholder="Event Location", name="location", width="100%"),
                         rx.input(placeholder="Event Description", name="description", width="100%"),
-                        rx.input(placeholder="Age Range Lowest", type="number",name="low_age", width="100%"),
-                        rx.input(placeholder="Age Range Highest", type="number",name="high_age", width="100%"),
+                        rx.input(placeholder="Age Range Lowest", type="number", name="low_age", width="100%"),
+                        rx.input(placeholder="Age Range Highest", type="number", name="high_age", width="100%"),
                         # rx.input(placeholder="Price Lowest", name="low_age", width="100%"),
                         # rx.input(placeholder="Price Highest", name="high_age", width="100%"),
                         rx.select(
                             [e.value for e in EventStatus.list()],
                             name="status"
                             , width="100%"),
-                        rx.input(placeholder="Capacity",type="number", name="capacity", width="100%"),
+                        rx.input(placeholder="Capacity", type="number", name="capacity", width="100%"),
                         rx.button("Submit Event", type_="submit"),
                         # rx.button("Submit Event", on_click=CreateEvent.make_event),
                     ),

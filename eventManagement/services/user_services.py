@@ -33,6 +33,31 @@ class UserServices(rx.State):
             return attending_events
 
     @staticmethod
+    def organise_event(user_id: int, event: Event):
+        # print(organiser.id)
+        with rx.session() as session:
+            # organiser = UserServices.get_organiser_from_base_user(user_id)
+            organiser = session.exec(Organiser.select().where(Organiser.user_id == user_id)).first()
+            organiser.events.append(event)
+            session.commit()
+            # new = Organisereventlink(user_id=base_user_id)
+            # session.add(organiser)
+        # organiser.events.append(event)
+
+    @staticmethod
+    def make_organiser(base_user_id: int):
+        with rx.session() as session:
+            organiser = Organiser(user_id=base_user_id)
+            session.add(organiser)
+            session.commit()
+
+    @staticmethod
+    def make_attendee(base_user_id: int):
+        with rx.session() as session:
+            attendee = Attendee(user_id=base_user_id)
+            session.add(attendee)
+
+    @staticmethod
     def get_attendees_base_user(attendee_id: int):
         with rx.session() as session:
             attendee = session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
@@ -120,7 +145,6 @@ class UserServices(rx.State):
                 session.commit()
                 # return True
                 return new_user
-
 
     @staticmethod
     def set_user_name(user_id: int, username: str):
