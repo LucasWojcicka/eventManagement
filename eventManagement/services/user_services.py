@@ -18,8 +18,10 @@ class UserServices(rx.State):
 
     @staticmethod
     def get_attendee_by_id(attendee_id: int) -> Attendee | None:
-        with rx.session() as session:
-            return session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
+        with (rx.session() as session):
+            return session.exec(
+                Attendee.select().where(Attendee.id == attendee_id)
+            ).first()
 
     @staticmethod
     def get_attending_events(attendee_id: int):
@@ -27,6 +29,7 @@ class UserServices(rx.State):
         with rx.session() as session:
             attendee = session.exec(Attendee.select().where(Attendee.id == attendee_id)).first()
             attending_events = attendee.events
+            print(len(attending_events))
             return attending_events
 
     @staticmethod
@@ -48,10 +51,11 @@ class UserServices(rx.State):
 
     @staticmethod
     def get_organised_events(organiser_id: int):
-        print("get attending events")
+        print("get ORGANISED events")
         with rx.session() as session:
             organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
             organised_events = organiser.events
+            print(len(organised_events))
             return organised_events
 
     @staticmethod
@@ -60,11 +64,22 @@ class UserServices(rx.State):
             organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
             return session.exec(User.select().where(User.id == organiser.user_id))
 
+    # @staticmethod
+    # def did_organiser_organise_this_event(organiser_id: int,event_id:int):
+    #     with rx.session() as session:
+    #         organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
+    #         return session.exec(User.select().where(User.id == organiser.user_id))
+
     # getters for user
     @staticmethod
     def get_user_by_id(user_id: int) -> User | None:
         with rx.session() as session:
             return session.exec(User.select().where(User.id == user_id)).first()
+
+    @staticmethod
+    def get_user_by_username(username: str) -> User | None:
+        with rx.session() as session:
+            return session.exec(User.select().where(User.username == username)).first()
 
     @staticmethod
     def get_organiser_from_base_user(user_id: int):
@@ -96,13 +111,16 @@ class UserServices(rx.State):
             # TODO not allow user to make account if phone-number or email are taken
             exists = session.exec(User.select().where(User.username == username)).first()
             if (exists is not None):
-                return False;
+                # return False;
+                return None;
             else:
                 session.add(new_user)
                 session.add(new_attendee_from_user)
                 session.add(new_organiser_from_user)
                 session.commit()
-                return True
+                # return True
+                return new_user
+
 
     @staticmethod
     def set_user_name(user_id: int, username: str):
@@ -153,10 +171,12 @@ class UserServices(rx.State):
             user = session.exec(User.select().where(User.username == username and User.password == password)).first()
             if (user is not None):
                 print("nuh uh")
-                return True
+                # return True
+                return user
             else:
                 print("rklsdhfsd")
-                return False
+                # return False
+                return None
 # login user, make event, unmake-event, attend event, un-attend event
 
 # class AddUser(rx.State):

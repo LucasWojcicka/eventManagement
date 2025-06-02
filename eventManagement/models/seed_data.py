@@ -14,24 +14,35 @@ from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
 
 
+
+
 def seed_users():
     fake = Faker()
     print("seed users")
     with rx.session() as session:
-        # existing_data = session.exec(User.select()).first()
-        # if existing_data:
-        #     print(f"already data, pass: {existing_data}")
-        #     # session.exec(sqlalchemy.text("DELETE FROM User"))
-        #     # session.exec(sqlalchemy.text("VACUUM"))
-        #     # session.commit()
-        #     # return
-        # else:
-        engine = create_engine("sqlite:///reflex.db")
+        existing_data = session.exec(User.select()).first()
+        if existing_data:
+            print(f"already data, pass: {existing_data}")
+            session.exec(sqlalchemy.text("DELETE FROM User"))
+            # session.exec(sqlalchemy.text("VACUUM"))
+            session.commit()
+            # return
+        else:
+            engine = create_engine("sqlite:///reflex.db")
 
-        session.exec(sqlalchemy.text("DELETE FROM User"))
+        # session.exec(sqlalchemy.text("DELETE FROM User"))
         # session.exec(sqlalchemy.text("VACUUM"))
         session.commit()
-        for x in range(50):
+        user = User(name="User User",
+                    email="user@mail.com",
+                    date_of_birth=fake.date_of_birth(),
+                    password="user",
+                    username="user",
+                    phone_number="1234")
+        session.add(user)
+        print(user)
+        session.commit()
+        for x in range(49):
             # print(x)
 
             first_name = fake.first_name()
@@ -63,11 +74,11 @@ def disperse_users_into_roles():
         for i, user in enumerate(users):
             print(f"User {i} -> DB ID: {user.id}")
 
-            if i <= 35:
+            if i <= 30:
                 print("just attendee")
                 attendee = Attendee(user_id=user.id)
                 session.add(attendee)
-            elif i > 35 and i <= 45:
+            elif i > 30 and i <= 40:
                 print("both")
                 attendee = Attendee(user_id=user.id)
                 organiser = Organiser(user_id=user.id)
@@ -171,6 +182,82 @@ def seed_one_attendee():
         session.commit()
 
 
+# def seed_all_attendees():
+#     with rx.session() as session:
+#         session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
+#         session.commit()
+#         all_attendees = session.exec(Attendee.select()).all()
+#         all_events = session.exec(Event.select()).all()
+#
+#         for attendee in all_attendees:
+#             num_events = random.randint(1, 5)
+#
+#             events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+#
+#             for event in events_to_add:
+#                 attendee.events.append(event)
+#
+#         session.commit()
+#
+#
+# def seed_all_organisers():
+#     with rx.session() as session:
+#         session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))
+#         session.commit()
+#         all_organiser = session.exec(Organiser.select()).all()
+#         all_events = session.exec(Event.select()).all()
+#
+#         for organiser in all_organiser:
+#             num_events = random.randint(0, 3)
+#
+#             events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+#
+#             for event in events_to_add:
+#                 organiser.events.append(event)
+#
+#         session.commit()
+
+import random
+
+
+def seed_all_attendees():
+    with rx.session() as session:
+        session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
+        session.commit()
+
+        all_attendees = session.exec(Attendee.select()).all()
+        all_events = session.exec(Event.select()).all()
+
+        for attendee in all_attendees:
+            if random.random() < 0.8:
+                num_events = random.randint(1, 5)
+                events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+
+                for event in events_to_add:
+                    attendee.events.append(event)
+
+        session.commit()
+
+
+def seed_all_organisers():
+    with rx.session() as session:
+        session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))
+        session.commit()
+
+        all_organisers = session.exec(Organiser.select()).all()
+        all_events = session.exec(Event.select()).all()
+
+        for organiser in all_organisers:
+            if random.random() < 0.7:
+                num_events = random.randint(1, 3)
+                events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
+
+                for event in events_to_add:
+                    organiser.events.append(event)
+
+        session.commit()
+
+
 def seed_perks():
     with rx.session() as session:
         fake = Faker()
@@ -179,7 +266,7 @@ def seed_perks():
             for x in range(1, random.randrange(2, 6, 1)):
                 new_perk = Perk(
                     name=str(fake.word().title()) + " Experience",
-                    price=10,
+                    price=random.randrange(10, 200, 10),
                     description=fake.paragraph(1),
                     age_range=event.age_range,
                     duration=random.randrange(1, 5, 1),

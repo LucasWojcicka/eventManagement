@@ -21,6 +21,18 @@ class User(rx.Model, table=True):
     phone_number: str
 
 
+    def to_dict(self):
+        return {
+            "name":self.name,
+            "email":self.email,
+            "id":self.id,
+            "date_of_birth":self.date_of_birth,
+            "password":self.password,
+            "username":self.username,
+            "phone_number":self.phone_number,
+
+        }
+
     # organiser: Optional["Organiser"] = Relationship(back_populates="user")
     # attendee: Optional["Attendee"] = Relationship(back_populates="user")
 

@@ -12,6 +12,7 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 from sqlmodel import Field, Relationship
 from typing import Optional, List
 
+
 # from eventManagement.models.event_links import EventTiers, EventRegistrations
 # from eventManagement.models.event_links import EventTiers
 
@@ -29,6 +30,10 @@ class EventType(Enum):
     def list():
         return list(map(lambda t: t, EventType))
 
+    @staticmethod
+    def to_dict():
+        return {e.value: e.value.capitalize() for e in EventType}
+
 
 class EventStatus(Enum):
     NORMAL = "normal"
@@ -38,6 +43,10 @@ class EventStatus(Enum):
     @staticmethod
     def list():
         return list(map(lambda t: t, EventStatus))
+
+    @staticmethod
+    def to_dict():
+        return {e.value: e.value.capitalize() for e in EventType}
 
 
 class Perk(rx.Model, table=True):
@@ -55,6 +64,18 @@ class Perk(rx.Model, table=True):
     event: "Event" = Relationship(
     )
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "price" : self.price,
+            "description" : self.description,
+            "age_range" : self.age_range,
+            "duration" : self.duration,
+            "available_slots" : self.available_slots,
+            "event_id" : self.event_id
+        }
+
 
 class Registration(rx.Model, table=True):
     id: int = Field(primary_key=True)
@@ -63,6 +84,7 @@ class Registration(rx.Model, table=True):
     description: str
     price: int
     approved: bool
+    user_id : int
     # approved: bool | None
     event_id: int = Field(
         default=None,
