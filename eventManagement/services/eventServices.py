@@ -135,6 +135,21 @@ class EventServices(rx.State):
         print("make_event")
 
     @staticmethod
+    def set_perk(name: str, duration: int, price: int,description: str,
+                  age_range: str, slots: int):
+        new_perk = Perk(name=name,
+                          duration=duration,
+                          price=price,
+                          description=description,
+                          age_range=age_range,
+                          available_slots=slots,
+                          )
+        with rx.session() as session:
+            session.add(new_perk)
+            session.commit()
+        print("make_perk")
+
+    @staticmethod
     def set_event_name(event_id: int, event_name: str):
         with rx.session() as session:
             event = EventServices.get_event_by_id(event_id)

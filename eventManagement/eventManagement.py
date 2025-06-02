@@ -1,4 +1,5 @@
-import datetime
+# import datetime
+from datetime import datetime
 
 import reflex as rx
 import sqlalchemy
@@ -40,6 +41,8 @@ async def get_events():
     # load_events = EventServices.LoadEvents()
     # load_events.load_all_events()
     return all_events
+
+
 
 
 # @fastapi_app.get("/api/login_user")
@@ -124,6 +127,13 @@ async def get_attended_events(event_id: int, event_name: str):
     from eventManagement.services.eventServices import EventServices
     attendee = EventServices.set_event_name(event_id, event_name)
     return attendee
+    # return events
+
+@fastapi_app.get("/api/make_event")
+async def make_event(name: str,duration: int, event_type: str, date: datetime, location:str, price_low :int, price_high: int, desc: str, age:str,attendee:int,status:str,capacity:int,occupied:int):
+    from eventManagement.services.eventServices import EventServices
+    EventServices.set_event(name,duration,event_type,datetime.now(),location,price_low,price_high,desc,age,status,capacity)
+    # return attendee
     # return events
 
 
@@ -635,18 +645,140 @@ def user_home_page():
 class CreateEvent(AppState):
     perks: list[dict] = []
     event_type: dict
+    edit_perks_popover: bool = False
+    event_created: bool = False
+    form_data: dict = {}
+
+    def mark_created(self):
+        self.event_created = True
 
     @rx.event
     async def balls(self):
         self.event_type = {e.value: e.value.capitalize() for e in EventType}
+
         from eventManagement.services.eventServices import EventServices
-        # event = EventServices.get_event_by_id(1)
-        # selected_event = event.to_dict()
-        perks_temp = EventServices.get_event_perks_from_event_id(1)
-        if perks_temp:
-            self.perks = [perk.to_dict() for perk in perks_temp]
+        # perks_temp = EventServices.get_event_perks_from_event_id(0)
+        # if perks_temp:
+        # self.perks = [perk.to_dict() for perk in perks_temp]
 
         print("meow")
+
+    @rx.event
+    async def make_event(self, formData: dict):
+        date_str = formData.get("date")
+        # if date_str:
+        #     date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        # else:
+        #     date_obj = None
+        date_str = formData.get("date")
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        print("DS:LGDL:GJDS")
+        print(date_str)
+        print(date_obj)
+        print("DS:LGDL:GJDS")
+        name = formData.get("name")
+        duration = formData.get("duration")
+        # date = formData.get("date")
+        date = date_obj
+        location = formData.get("location")
+        desc = formData.get("description")
+        low_age = formData.get("low_age")
+        high_age = formData.get("high_age")
+        capacity = formData.get("capacity")
+        event_type = formData.get("type")
+        event_status = formData.get("status")
+        age_range = str(low_age) + " to " + str(high_age)
+        from eventManagement.services.eventServices import EventServices
+        EventServices.set_event(name, duration, event_type, date, location, 0, 0, desc, age_range, event_status,
+                                capacity)
+
+    @rx.event
+    async def make_new_perk(self):
+        print("make new perk")
+
+    @rx.event
+    async def edit_perk(self):
+        print("edit perk")
+
+    @rx.event
+    async def handleSubmitOnNewPerk(self, formData: dict):
+        print("wahoo")
+        print("bacon bacon bacon")
+        username = formData.get("perk_name")
+        password = formData.get("perk_price")
+        print(username + " " + password)
+        from eventManagement.services.eventServices import EventServices
+        EventServices.set_perk(formData.get("perk_name"), formData.get("perk_duration"), formData.get("perk_price"),
+                               formData.get("perk_description"),
+                               str(formData.get("perk_age_range_highest")) + " to" + str(
+                                   formData.get("perk_age_range_lowest")), formData.get("perk_slots"))
+
+
+def perkPopover():
+    return rx.dialog.content(
+        rx.dialog.title("New Perk"),
+        rx.container(
+            rx.vstack(
+                rx.form(
+                    rx.vstack(
+                        rx.input(
+                            placeholder="Name",
+                            name="perk_name",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Price",
+                            name="perk_price",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Description",
+                            name="perk_description",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Age Range Lowest",
+                            name="perk_age_range_lowest",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Age Range Highest",
+                            name="perk_age_range_highest",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Duration",
+                            name="perk_duration",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Available Slots",
+                            name="perk_slots",
+                            type="number",
+                            width="100%"
+                        ),
+                        rx.button("Submit", type="submit"),
+                        align="center",
+                    ),
+                    on_submit=CreateEvent.handleSubmitOnNewPerk,
+                    reset_on_submit=True,
+                ),
+            ),
+        ),
+        rx.dialog.close(
+            rx.button("Close", size="3"),
+        ),
+    ),
 
 
 @rx.page(route="/create-event", on_load=CreateEvent.balls())
@@ -655,25 +787,46 @@ def create_event():
         rx.vstack(
             rx.heading("Create New Event!"),
             rx.card(
-                rx.vstack(
-                    rx.input(placeholder="Event Name", name="name", width="100%"),
-                    rx.input(placeholder="Event Duration", name="duration", width="100%"),
-                    rx.select(
-                        [e.value for e in EventType.list()]
-                    , width="100%"),
-                    rx.input(placeholder="Event Date", name="date", type="date", width="100%"),
-                    rx.input(placeholder="Event Location", name="location", width="100%"),
-                    rx.input(placeholder="Event Description", name="description", width="100%"),
-                    rx.input(placeholder="Age Range Lowest", name="low_age", width="100%"),
-                    rx.input(placeholder="Age Range Highest", name="high_age", width="100%"),
-                    rx.select(
-                        [e.value for e in EventStatus.list()]
-                    , width="100%"),
-                    rx.input(placeholder="Capacity", name="capacity", width="100%"),
+                rx.form(
+                    rx.vstack(
+                        rx.input(placeholder="Event Name", name="name", width="100%"),
+                        rx.input(placeholder="Event Duration", name="duration",type="number", width="100%"),
+                        rx.select(
+                            [e.value for e in EventType.list()],
+                            name="type"
+                            , width="100%"),
+                        rx.input(placeholder="Event Date", name="date", type="date", width="100%"),
+                        rx.input(placeholder="Event Location", name="location", width="100%"),
+                        rx.input(placeholder="Event Description", name="description", width="100%"),
+                        rx.input(placeholder="Age Range Lowest", type="number",name="low_age", width="100%"),
+                        rx.input(placeholder="Age Range Highest", type="number",name="high_age", width="100%"),
+                        # rx.input(placeholder="Price Lowest", name="low_age", width="100%"),
+                        # rx.input(placeholder="Price Highest", name="high_age", width="100%"),
+                        rx.select(
+                            [e.value for e in EventStatus.list()],
+                            name="status"
+                            , width="100%"),
+                        rx.input(placeholder="Capacity",type="number", name="capacity", width="100%"),
+                        rx.button("Submit Event", type_="submit"),
+                        # rx.button("Submit Event", on_click=CreateEvent.make_event),
+                    ),
+                    on_submit=CreateEvent.make_event
                 ),
+
                 width="100%"
             ),
-            rx.button("Create New Perk"),
+            # rx.button("Create New Perk", on_click=perkPopover()),
+            # rx.dialog.root(
+            #     rx.dialog.trigger(rx.button("Create New Perk", size="3")),
+            #     perkPopover()
+            # ),
+            rx.cond(
+                CreateEvent.event_created,
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Create New Perk", size="3")),
+                    perkPopover()
+                )
+            ),
             rx.grid(
                 rx.foreach(
                     CreateEvent.perks,
