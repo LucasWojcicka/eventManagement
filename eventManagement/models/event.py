@@ -79,10 +79,10 @@ class Perk(rx.Model, table=True):
 
 class Registration(rx.Model, table=True):
     id: int = Field(primary_key=True)
-    registration_type: str
-    registration_type_perks: Optional[str]
-    description: str
+    perk_id : int
     price: int
+    registration_date : datetime
+    approved_date : Optional[datetime]
     approved: bool
     user_id : int
     # approved: bool | None
@@ -93,6 +93,19 @@ class Registration(rx.Model, table=True):
 
     event: "Event" = Relationship(
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "perk_id" : self.perk_id,
+            "price" : self.price,
+            "registration_date" : self.registration_date,
+            "approved_date" : self.approved_date,
+            "approved" : self.approved,
+            "user_id" : self.user_id,
+            "event_id" : self.event_id
+        }
+
 
 
 class Event(rx.Model, table=True):

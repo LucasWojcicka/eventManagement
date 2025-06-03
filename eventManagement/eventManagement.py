@@ -6,7 +6,8 @@ import sqlalchemy
 
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import Event, EventType, EventStatus
-from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees, seed_all_organisers
+from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees, seed_all_organisers, \
+    seed_all_registrations
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
@@ -97,11 +98,11 @@ async def get_attended_events(attendee_id: int):
     # return events
 
 
-@fastapi_app.get("/api/get_attendee_events_NEW")
-async def get_attended_events(base_user_id: int):
-    from eventManagement.services.user_services import UserServices
-    attendee = UserServices.get_attendee_from_base_user(base_user_id)
-    return attendee.events
+# @fastapi_app.get("/api/get_attendee_events_NEW")
+# async def get_attended_events(base_user_id: int):
+#     from eventManagement.services.user_services import UserServices
+#     attendee = UserServices.get_attendee_from_base_user(base_user_id)
+#     return attendee.events
     # return events
 
 
@@ -420,8 +421,18 @@ def dashboard():
 
 class EventInnards(DashboardState):
     perks: list[dict] = []
+    attenders: list[dict] = []
+    regos: list[dict] = []
     event_id: int
     role = "None"
+    # events: list[dict] = []
+    # selected_event: dict | None = None
+    #
+    # @rx.event
+    # async def load_events(self):
+    #     from eventManagement.services.eventServices import EventServices
+    #     events_list = EventServices.get_all_events()
+    #     self.events = [event.to_dict() for event in events_list]
 
     @rx.event
     async def fetch_and_redirect(self, event_id: int):
@@ -443,6 +454,15 @@ class EventInnards(DashboardState):
             self.selected_event = event.to_dict()
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
+
+
+            # self.selected_event = event.to_dict()
+            attenders_temp = UserServices.get_attenders(event_id)
+            self.attenders = [user.to_dict() for user in attenders_temp]
+
+            # self.selected_event = event.to_dict()
+            regos_temp = EventServices.get_all_registrations_on_event(event_id)
+            self.regos = [registration.to_dict() for registration in regos_temp]
             return rx.redirect("/organised-event-detail")
         else:
             print("ERROR: Event is None when expected not to be.")
@@ -450,7 +470,8 @@ class EventInnards(DashboardState):
 
 @rx.page(route="/event-detail")
 def event_detail():
-    event = DashboardState.selected_event
+    # event = DashboardState.selected_event
+    event = EventInnards.selected_event
 
     # perks = EventInnards.get_perks()
     # id = DashboardState.selected_event['id']
@@ -508,7 +529,7 @@ def event_detail():
             margin_bottom="6",
         ),
         rx.button(
-            "Book Event",
+            "Cancel Ticket",
             # on_click=DashboardState.book_selected_event,
             color_scheme="green",
             size="4"
@@ -540,8 +561,13 @@ def event_detail():
 #     event = Organised_Events_Details.events
 @rx.page(route="/organised-event-detail")
 def event_detail():
-    event = DashboardState.selected_event
-    # attenders_temp = EventServices.get_attenders(event['id'])
+    # event = DashboardState.selected_event
+    event = EventInnards.selected_event
+    print(event['id'])
+    # print(event_id)
+    # print(event.get('id'))
+    # attenders_temp = UserServices.get_attenders(event["id"])
+    # attenders_temp = EventServices.get_attenders(event.get('id'))
     # attenders = [attendee.to_dict() for attendee in attenders_temp]
     # print(attenders)
 
@@ -569,8 +595,13 @@ def event_detail():
         rx.grid(
             rx.foreach(
                 EventInnards.perks,
+                # EventInnards.regos,
+                # EventInnards.attenders,
+                # lambda reg: rx.card(
                 lambda perk: rx.card(
                     rx.vstack(
+                        # rx.text(reg["user_id"], font_weight="bold"),
+                        # rx.text(reg["event_id"], font_weight="bold"),
                         rx.text(perk["name"], font_weight="bold"),
                         rx.text(f"Price: ${perk['price']}"),
                         rx.text(f"Description: {perk['description']}"),
@@ -589,6 +620,22 @@ def event_detail():
             spacing="4",
             width="100%",
             margin_bottom="6",
+        ),
+        rx.heading("Attenders", size="4", margin_bottom="2"),
+        rx.vstack(
+            rx.foreach(
+                EventInnards.regos,
+                lambda user: rx.card(
+                    rx.text(f"{user['event_id']} (User ID: {user['user_id']})"),
+                    padding="3",
+                    shadow="xs",
+                    border_radius="xl",
+                    width="100%"
+                )
+            ),
+            spacing="2",
+            margin_bottom="6",
+            width="100%"
         ),
         rx.button(
             "Edit Event",
@@ -660,7 +707,7 @@ def user_home_page():
                                 rx.text(event["date"]),
                             ),
                             height="25vh",
-                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                            on_click=lambda e=event: EventInnards.fetch_and_redirect_organised_event(event["id"])
                             # on_click=lambda e=event: EventInnards.fetch_and_redirect_organised_event(event["id"])
                         )
                     ),
@@ -991,7 +1038,8 @@ class UserHomePage(AppState):
         from eventManagement.services.user_services import UserServices
         attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
         if attendee:
-            events = UserServices.get_attending_events(attendee.id)
+            # events = UserServices.get_attending_events(attendee.id)
+            events = UserServices.get_attending_events(UserServices.get_attendee_from_base_user(self.current_user_id).id)
             # events = attendee.events
             self.attending_events = [event.to_dict() for event in events]
 
@@ -1270,6 +1318,7 @@ seed_one_attendee()
 seed_all_attendees()
 seed_all_organisers()
 seed_perks()
+seed_all_registrations()
 
 # TODO
 # organiser portal

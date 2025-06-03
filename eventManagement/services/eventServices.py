@@ -8,6 +8,7 @@ from eventManagement.models.event import EventType, EventStatus, Event, Registra
 # from eventManagement.models.user import User
 from typing import Optional, List
 from typing import Annotated
+from sqlalchemy import select
 
 from fastapi import FastAPI, Path
 
@@ -94,6 +95,29 @@ class EventServices(rx.State):
                 if any(event.id == event_id for event in attendee.events)
             ]
         return attenders
+
+    @staticmethod
+    def get_all_registrations_on_event(event_id: int):
+        print("get registrations of event")
+        with rx.session() as session:
+            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id)).all()
+
+        return all_registrations
+    #
+    # @staticmethod
+    # def get_attenders(event_id: int):
+    #     with rx.session() as session:
+    #         statement = (
+    #             select(Attendee.id)
+    #             .join(Attendee.events)
+    #             .where(Event.id == event_id)
+    #         )
+    #         results = session.exec(statement).all()
+    #         attenders = [row for row in results]
+    #     return attenders
+
+
+
 
     @staticmethod
     def get_event_by_name(name: str):

@@ -74,6 +74,40 @@ class UserServices(rx.State):
         with rx.session() as session:
             return session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
 
+    # @staticmethod
+    # def get_attenders(event_id: int):
+    #     print("get attenders of event")
+    #     with rx.session() as session:
+    #         all_attendees = session.exec(Attendee.select()).all()
+    #         matching_attendees = []
+    #
+    #         for attendee in all_attendees:
+    #             for event in attendee.events:
+    #                 if event.id == event_id:
+    #                     matching_attendees.append(attendee)
+    #                     break  # One match is enough
+    #
+    #         print(f"Found {len(matching_attendees)} attenders for event {event_id}")
+    #         return matching_attendees
+
+    @staticmethod
+    def get_attenders(event_id: int):
+        print("get attenders of event")
+        with rx.session() as session:
+            all_attendees = session.exec(Attendee.select()).all()
+            matching_users = []
+
+            for attendee in all_attendees:
+                for event in attendee.events:
+                    if event.id == event_id:
+                        user = session.exec(User.select().where(User.id == attendee.user_id)).first()
+                        if user:
+                            matching_users.append(user)
+                        break
+
+            print(f"Found {len(matching_users)} users attending event {event_id}")
+            return matching_users
+
     @staticmethod
     def get_organised_events(organiser_id: int):
         print("get ORGANISED events")

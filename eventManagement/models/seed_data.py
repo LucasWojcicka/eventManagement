@@ -9,11 +9,9 @@ from sqlmodel import Session
 from faker import Faker
 
 from eventManagement.models.user import User
-from eventManagement.models.event import Event, EventType, EventStatus, Perk
+from eventManagement.models.event import Event, EventType, EventStatus, Perk, Registration
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
-
-
 
 
 def seed_users():
@@ -235,6 +233,88 @@ def seed_all_attendees():
 
                 for event in events_to_add:
                     attendee.events.append(event)
+
+        session.commit()
+
+
+# def seed_all_registrations():
+#     with rx.session() as session:
+#         fake = Faker()
+#         session.exec(sqlalchemy.text("DELETE FROM Registration"))
+#         session.commit()
+#
+#         all_attendees = session.exec(Attendee.select()).all()
+#         for attendee in all_attendees:
+#             for event in attendee.events :
+#                 # seeded_date = fake.date_this_year(after_today=True)
+#                 # seeded_time = fake.time_object()
+#                 # make_date = datetime(seeded_date.year, seeded_date.month, seeded_date.day, seeded_time.hour,
+#                 #                      seeded_time.minute, seeded_time.second)
+#                 attendees_base_user = session.exec(User.select().where(User.id == attendee.user_id))
+#                 current_event = session.exec(Event.select().where(Event.id == event.id)).first()
+#                 event_perks = session.exec(Perk.select().where(Perk.event_id == current_event.id))
+#                 random_perk = random.sample(event_perks, k=min(1, len(event_perks)))
+#                 new_registration = Registration(
+#                     price=random_perk.price,
+#                     approved=True,
+#                     event_id=current_event.id,
+#                     user_id=attendees_base_user.id,
+#                     perk_id=random_perk.id,
+#                     registration_date= datetime.date(),
+#                     approved_date= datetime.date(),
+#                 )
+
+def seed_all_registrations():
+    with rx.session() as session:
+        fake = Faker()
+        session.exec(sqlalchemy.text("DELETE FROM registration"))
+        session.commit()
+
+        all_attendees = session.exec(Attendee.select()).all()
+        for attendee in all_attendees:
+            for event in attendee.events:
+                base_user = session.exec(
+                    User.select().where(User.id == attendee.user_id)
+                ).first()
+
+                current_event = session.exec(
+                    Event.select().where(Event.id == event.id)
+                ).first()
+                if not current_event:
+                    continue
+
+                event_perks = session.exec(
+                    Perk.select().where(Perk.event_id == current_event.id)
+                ).all()
+                if not event_perks:
+                    continue
+
+                random_perk = random.choice(event_perks)
+
+                latest_possible = current_event.date
+                registration_date = fake.date_time_between(
+                    start_date="-1y", end_date=latest_possible
+                )
+
+                is_approved = random.choice([True, False])
+                approved_date = (
+                    fake.date_time_between(
+                        start_date=registration_date,
+                        end_date=latest_possible
+                    ) if is_approved else None
+                )
+
+                new_registration = Registration(
+                    price=random_perk.price,
+                    approved=is_approved,
+                    event_id=current_event.id,
+                    user_id=base_user.id,
+                    perk_id=random_perk.id,
+                    registration_date=registration_date,
+                    approved_date=approved_date,
+                )
+
+                session.add(new_registration)
 
         session.commit()
 
