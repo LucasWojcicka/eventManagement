@@ -103,7 +103,7 @@ async def get_attended_events(attendee_id: int):
 #     from eventManagement.services.user_services import UserServices
 #     attendee = UserServices.get_attendee_from_base_user(base_user_id)
 #     return attendee.events
-    # return events
+# return events
 
 
 @fastapi_app.get("/api/get_organised_events")
@@ -392,7 +392,7 @@ def dashboard():
                             rx.text(event["age_range"]),
                         ),
                         height="25vh",
-                        on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                        on_click=lambda e=event: EventInnards.fetch_and_redirect_for_book(event["id"])
                         # on_click=lambda e=event: DashboardState.fetch_and_redirect(event["id"])
                     )
                 ),
@@ -427,6 +427,7 @@ class EventInnards(DashboardState):
     rejected_regos: list[dict] = []
     event_id: int
     role = "None"
+
     # events: list[dict] = []
     # selected_event: dict | None = None
     #
@@ -449,6 +450,18 @@ class EventInnards(DashboardState):
             print("ERROR: Event is None when expected not to be.")
 
     @rx.event
+    async def fetch_and_redirect_for_book(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks = [perk.to_dict() for perk in perks_temp]
+            return rx.redirect("/book-ticket")
+        else:
+            print("ERROR: Event is None when expected not to be.")
+
+    @rx.event
     async def fetch_and_redirect_organised_event(self, event_id: int):
         from eventManagement.services.eventServices import EventServices
         event = EventServices.get_event_by_id(event_id)
@@ -456,7 +469,6 @@ class EventInnards(DashboardState):
             self.selected_event = event.to_dict()
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
-
 
             # self.selected_event = event.to_dict()
             attenders_temp = UserServices.get_attenders(event_id)
@@ -469,7 +481,6 @@ class EventInnards(DashboardState):
                 for rego in self.regos:
                     perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
                     rego["perk_name"] = perk.name if perk else "Unknown"
-
 
             regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
             self.approved_regos = [registration.to_dict() for registration in regos_temp]
@@ -490,7 +501,6 @@ class EventInnards(DashboardState):
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
 
-
             # self.selected_event = event.to_dict()
             attenders_temp = UserServices.get_attenders(event_id)
             self.attenders = [user.to_dict() for user in attenders_temp]
@@ -503,7 +513,6 @@ class EventInnards(DashboardState):
                     perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
                     rego["perk_name"] = perk.name if perk else "Unknown"
 
-
             regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
             self.approved_regos = [registration.to_dict() for registration in regos_temp]
 
@@ -513,6 +522,372 @@ class EventInnards(DashboardState):
             return rx.redirect("/edit-event")
         else:
             print("ERROR: Event is None when expected not to be.")
+
+
+class TicketBooking(AppState):
+    perks: list[dict] = []
+    # selected_event: list[dict] = []
+    event_id: int
+    selected_event: dict | None = None
+
+    selected_perks: list[str] = []
+    selected_perk: str = ""
+    subtotal : int = 0
+
+    @rx.event
+    def pay(self, event : dict):
+        print(f"PAY PAY PAY {self.selected_perk} {self.subtotal} {event['name']}")
+    @rx.event
+    def select_perk(self, perk_name: str, perk_price : int):
+        print(self.selected_perk)
+        self.selected_perk = perk_name
+        self.subtotal = perk_price
+        print(self.selected_perk)
+
+    # @rx.event
+    # def select_perk(self, name: str):
+    #     print(name)
+    #     if name in self.selected_perks:
+    #         self.selected_perks.remove(name)
+    #     else:
+    #         self.selected_perks.append(name)
+
+    @rx.event
+    def toggle_perk(self, name: str):
+        if name in self.selected_perks:
+            self.selected_perks.remove(name)
+        else:
+            self.selected_perks.append(name)
+
+    #
+    # @rx.event
+    # def select_perk(self, name: str):
+    #     print(f"Selected perk: {name}")
+
+    @rx.event
+    def load_event_detail_for_book(self, event_id):
+        print("meow")
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            print("is event")
+            # self.selected_event = [event.to_dict()]
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks = [perk.to_dict() for perk in perks_temp]
+            # return rx.redirect("/book-ticket")
+
+    @rx.event
+    # def book_ticket_for_event(self, event):
+    def book_ticket_for_event(self, event_id):
+        event = EventServices.get_event_by_id(event_id).to_dict()
+        selected_event = event
+        print(f"book ticket for {event['name']}")
+        return rx.redirect("/make-registration")
+
+
+@rx.page(route="/book-ticket", on_load=TicketBooking.load_event_detail_for_book(EventInnards.selected_event['id']))
+def book_ticket():
+    # event = TicketBooking.selected_event
+    event = EventInnards.selected_event
+    return rx.container(
+        rx.card(
+            rx.vstack(
+                rx.heading(event["name"], size="4"),
+                rx.text(f"Type: {event['event_type']}"),
+                rx.text(f"Location: {event['location']}"),
+                rx.text(f"Date: {event['date']}"),
+                rx.text(f"Age Range: {event['age_range']}"),
+                spacing="3",
+                align="start"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="3xl",
+            margin_bottom="6",
+        ),
+
+        rx.heading("Perks", size="4", margin_bottom="2"),
+        rx.grid(
+            rx.foreach(
+                EventInnards.perks,
+                lambda perk: rx.card(
+                    rx.vstack(
+                        rx.text(perk["name"], font_weight="bold"),
+                        rx.text(f"Price: ${perk['price']}"),
+                        rx.text(f"Description: {perk['description']}"),
+                        rx.text(f"Age Range: {perk['age_range']}"),
+                        rx.text(f"Duration: {perk['duration']}"),
+                        rx.text(f"Available Slots: {perk['available_slots']}"),
+                        spacing="2",
+                        align="start"
+                    ),
+                    padding="4",
+                    shadow="sm",
+                    border_radius="xl",
+                )
+            ),
+            columns="2",
+            spacing="4",
+            width="100%",
+            margin_bottom="6",
+        ),
+        rx.button(
+            "Book Ticket",
+            on_click=TicketBooking.book_ticket_for_event(event["id"]),
+            # on_click=lambda e=event: TicketBooking.book_ticket(event["id"]),
+            # on_click=DashboardState.book_selected
+            # _event,
+            color_scheme="blue",
+            size="4"
+        ),
+
+        padding="6",
+        spacing="6"
+    )
+
+
+@rx.page(route="/make-registration")
+def make_registration():
+    # event = TicketBooking.selected_event
+    event = EventInnards.selected_event
+    return rx.container(
+        rx.heading("Make Registration", size="6", margin_bottom="4"),
+
+        rx.card(
+            rx.vstack(
+                rx.heading(event['name'], size="4"),
+                rx.text(event['event_type']),
+                rx.text(event['location']),
+                rx.text(event['date']),
+                rx.text(event['age_range']),
+                spacing="3",
+                align="start"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="3xl",
+            margin_bottom="6",
+        ),
+
+        rx.card(
+            rx.vstack(
+                rx.heading("Available Perks", size="4", margin_bottom="2"),
+                rx.grid(
+                    rx.foreach(
+                        EventInnards.perks,
+                        lambda perk: rx.card(
+                            rx.vstack(
+                                rx.text(f"{perk['name']} : {perk['price']}", font_weight="bold"),
+                                rx.text(perk['description']),
+                                spacing="1",
+                                align="start"
+                            ),
+                            padding="3",
+                            border_radius="xl",
+                            shadow="xs"
+                        )
+                    ),
+                    columns="3",
+                    spacing="3",
+                    width="100%",
+                )
+            ),
+            padding="4",
+            shadow="sm",
+            border_radius="xl",
+            margin_bottom="6"
+        ),
+
+        rx.card(
+            rx.vstack(
+                rx.heading("Register and Pay", size="4"),
+
+                rx.input(placeholder="Cardholder Name", width="100%"),
+                rx.input(placeholder="Card Number", type_="number", width="100%"),
+                rx.input(placeholder="Expiry Date (MM/YY)", width="100%"),
+                rx.input(placeholder="CVV", type_="password", width="100%"),
+
+                rx.text("Select Perks"),
+                rx.foreach(
+                    EventInnards.perks,
+                    lambda perk: rx.card(
+                        rx.vstack(
+                            rx.text(f"{perk['name']} : {perk['price']}", font_weight="bold"),
+                            rx.text(perk['description']),
+                            spacing="1",
+                            align="start",
+                            on_click = lambda p=perk: TicketBooking.select_perk(p["name"], p["price"]),
+
+                        ),
+                        padding="3",
+                        border_radius="xl",
+                        shadow="xs",
+                        cursor="pointer",
+                        border=rx.cond(
+                            TicketBooking.selected_perk == perk["name"],
+                            "1px solid #3182ce",
+                            "1px solid #e2e8f0"
+                        ),
+                    )
+                ),
+
+
+
+                rx.text(f"Subtotal: {TicketBooking.subtotal}", font_weight="bold"),
+
+                rx.button(
+                    "Pay",
+                    color_scheme="blue",
+                    size="4",
+                    on_click=TicketBooking.pay(event)
+                ),
+
+                spacing="4",
+                align="stretch",
+                width="100%"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="2xl",
+            width="100%"
+        ),
+
+        padding="6",
+        spacing="6"
+    )
+    # return rx.container(
+    #     rx.card(
+    #         rx.vstack(
+    #             rx.heading("meow"),
+    #             rx.heading(event["name"], size="4"),
+    #             rx.text(f"Type: {event['event_type']}"),
+    #             rx.text(f"Location: {event['location']}"),
+    #             rx.text(f"Date: {event['date']}"),
+    #             rx.text(f"Age Range: {event['age_range']}"),
+    #             spacing="3",
+    #             align="start"
+    #         ),
+    #         padding="6",
+    #         shadow="md",
+    #         border_radius="3xl",
+    #         margin_bottom="6",
+    #     ),
+    #
+    #
+    #     rx.heading("Perks", size="4", margin_bottom="2"),
+    #     rx.grid(
+    #         rx.foreach(
+    #             EventInnards.perks,
+    #             lambda perk: rx.card(
+    #                 rx.vstack(
+    #                     rx.text(perk["name"], font_weight="bold"),
+    #                     rx.text(f"Price: ${perk['price']}"),
+    #                     rx.text(f"Description: {perk['description']}"),
+    #                     rx.text(f"Age Range: {perk['age_range']}"),
+    #                     rx.text(f"Duration: {perk['duration']}"),
+    #                     rx.text(f"Available Slots: {perk['available_slots']}"),
+    #                     spacing="2",
+    #                     align="start"
+    #                 ),
+    #                 padding="4",
+    #                 shadow="sm",
+    #                 border_radius="xl",
+    #             )
+    #         ),
+    #         columns="2",
+    #         spacing="4",
+    #         width="100%",
+    #         margin_bottom="6",
+    #     ),
+    #     rx.button(
+    #         "Book Ticket",
+    #         # on_click=TicketBooking.book_ticket_for_event(event["id"]),
+    #         # on_click=lambda e=event: TicketBooking.book_ticket(event["id"]),
+    #         # on_click=DashboardState.book_selected
+    #         # _event,
+    #         color_scheme="blue",
+    #         size="4"
+    #     ),
+    #
+    #     padding="6",
+    #     spacing="6"
+    # )
+
+
+@rx.page(route="/booked-event-detail")
+def booked_event_detail():
+    # event = DashboardState.selected_event
+    event = EventInnards.selected_event
+
+    # perks = EventInnards.get_perks()
+    # id = DashboardState.selected_event['id']
+    # EventInnards.get_perks()
+
+    # return rx.container(
+    #     rx.heading(event["name"]),
+    #     rx.text(f"Type: {event['event_type']}"),
+    #     rx.text(f"Location: {event['location']}"),
+    #     rx.text(f"Date: {event['date']}"),
+    #     rx.text(f"Age Range: {event['age_range']}"),
+    #     rx.button("Back to Dashboard", on_click=rx.redirect("/dashboard")),
+    #     padding="4",
+    # )
+    return rx.container(
+        rx.card(
+            rx.vstack(
+                rx.heading(event["name"], size="4"),
+                rx.text(f"Type: {event['event_type']}"),
+                rx.text(f"Location: {event['location']}"),
+                rx.text(f"Date: {event['date']}"),
+                rx.text(f"Age Range: {event['age_range']}"),
+                spacing="3",
+                align="start"
+            ),
+            padding="6",
+            shadow="md",
+            border_radius="3xl",
+            margin_bottom="6",
+        ),
+
+        rx.heading("Perks", size="4", margin_bottom="2"),
+        rx.grid(
+            rx.foreach(
+                EventInnards.perks,
+                lambda perk: rx.card(
+                    rx.vstack(
+                        rx.text(perk["name"], font_weight="bold"),
+                        rx.text(f"Price: ${perk['price']}"),
+                        rx.text(f"Description: {perk['description']}"),
+                        rx.text(f"Age Range: {perk['age_range']}"),
+                        rx.text(f"Duration: {perk['duration']}"),
+                        rx.text(f"Available Slots: {perk['available_slots']}"),
+                        spacing="2",
+                        align="start"
+                    ),
+                    padding="4",
+                    shadow="sm",
+                    border_radius="xl",
+                )
+            ),
+            columns="2",
+            spacing="4",
+            width="100%",
+            margin_bottom="6",
+        ),
+        rx.button(
+            "Cancel Ticket",
+            # on_click=TicketBooking.book_ticket(),
+            # on_click=lambda e=event: TicketBooking.book_ticket(event["id"]),
+            # on_click=DashboardState.book_selected
+            # _event,
+            color_scheme="green",
+            size="4"
+        ),
+
+        padding="6",
+        spacing="6"
+    )
 
 
 @rx.page(route="/event-detail")
@@ -577,7 +952,11 @@ def event_detail():
         ),
         rx.button(
             "Cancel Ticket",
-            # on_click=DashboardState.book_selected_event,
+            # on_click=TicketBooking.book_ticket(),
+            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"]),
+            # on_click=lambda e=event: TicketBooking.book_ticket(event["id"]),
+            # on_click=DashboardState.book_selected
+            # _event,
             color_scheme="green",
             size="4"
         ),
@@ -673,7 +1052,8 @@ def event_detail():
             rx.foreach(
                 EventInnards.regos,
                 lambda rego: rx.card(
-                    rx.text(f"Registration id : {rego['id']} | Approved : {(rego['approved'])} | Perk : {rego['perk_name']}"),
+                    rx.text(
+                        f"Registration id : {rego['id']} | Approved : {(rego['approved'])} | Perk : {rego['perk_name']}"),
                     padding="3",
                     shadow="xs",
                     border_radius="xl",
@@ -833,6 +1213,9 @@ def user_home_page():
     #
     #     )
     # )
+
+
+# TODO on load show perks and edit perks
 class EditEvent(AppState):
     perks: list[dict] = []
     event_type: dict
@@ -848,19 +1231,32 @@ class EditEvent(AppState):
     # TODO lazy load events, if no events organsied make organiser
     @rx.event
     async def balls(self):
+        # event = EventInnards.selected_event
+        # self.event_id = event["id"]
         self.event_type = {e.value: e.value.capitalize() for e in EventType}
-        if self.event_id > 0:
-            await self.load_perks()
+        # self.perks = EventInnards.perks
+        # if self.event_id > 0:
+        # EditEvent.load_perks()
         print("meow")
         self.event_created = False;
         from eventManagement.services.user_services import UserServices
         organiser = UserServices.get_organiser_from_base_user(self.current_user_id)
+        # self.load_perks()
 
         if (organiser == None):
             UserServices.make_organiser(self.current_user_id)
         else:
             events = UserServices.get_organised_events(organiser.id)
             self.organised_events = [event.to_dict() for event in events]
+
+        from eventManagement.services.eventServices import EventServices
+        perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)
+        self.perks = [perk.to_dict() for perk in perks_temp]
+        # if perks_temp:
+        #     self.perks = [perk.to_dict() for perk in perks_temp]
+        #     print("THERE ARE PERKS")
+        # else:
+        #     self.perks = []
 
         from eventManagement.services.eventServices import EventServices
         # perks_temp = EventServices.get_event_perks_from_event_id(0)
@@ -873,6 +1269,7 @@ class EditEvent(AppState):
         perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)
         if perks_temp:
             self.perks = [perk.to_dict() for perk in perks_temp]
+            print("THERE ARE PERKS")
         else:
             self.perks = []
 
@@ -906,9 +1303,9 @@ class EditEvent(AppState):
                                                    event_status,
                                                    capacity, self.current_user_id)
 
-        self.event_created = True
+        # self.event_created = True
         self.event_id = newEventBALLS.get("id")
-        self.event_created = True
+        # self.event_created = True
 
         await self.load_perks()
 
@@ -936,7 +1333,7 @@ class EditEvent(AppState):
         await self.load_perks()
 
 
-def perkPopover():
+def editPerkPopover():
     return rx.dialog.content(
         rx.dialog.title("New Perk"),
         rx.container(
@@ -992,8 +1389,25 @@ def perkPopover():
                         rx.button("Submit", type="submit"),
                         align="center",
                     ),
-                    on_submit=CreateEvent.handleSubmitOnNewPerk,
-                    reset_on_submit=True,
+                    rx.grid(
+                        rx.foreach(
+                            EditEvent.perks,
+                            lambda perk: rx.card(
+                                rx.vstack(
+                                    rx.heading(perk["name"]),
+                                    rx.text(f"Price : {perk['price']}"),
+                                    rx.text(f"Description : {perk['description']}"),
+                                    rx.text(f"Age Range : {perk['age_range']}"),
+                                    rx.text(f"Duration : {perk['duration']} hour"),
+                                    rx.text(f"Available Slots : {perk['available_slots']}"),
+                                    rx.button("Delete"),
+                                    rx.button("Edit"),
+                                )
+                            )
+                        ),
+                        columns="3",
+                        spacing="4",
+                    ),
                 ),
             ),
         ),
@@ -1006,6 +1420,7 @@ def perkPopover():
 @rx.page(route="/edit-event", on_load=EditEvent.balls())
 def edit_event():
     event = EventInnards.selected_event
+    # EditEvent.load_perks()
     return rx.center(
         rx.vstack(
             rx.heading("Edit Event!"),
@@ -1013,14 +1428,16 @@ def edit_event():
                 rx.form(
                     rx.vstack(
                         rx.input(placeholder="name", name="name", width="100%", value=event['name']),
-                        rx.input(placeholder="Event Duration", name="duration", type="number", width="100%", value=event['duration']),
+                        rx.input(placeholder="Event Duration", name="duration", type="number", width="100%",
+                                 value=event['duration']),
                         rx.select(
                             [e.value for e in EventType.list()],
                             name="type"
                             , width="100%", value=event['event_type']),
-                        rx.input(placeholder="Event Date", name="date", type="date", width="100%",value=event['date']),
-                        rx.input(placeholder="Event Location", name="location", width="100%",value=event['location']),
-                        rx.input(placeholder="Event Description", name="description", width="100%",value=event['description']),
+                        rx.input(placeholder="Event Date", name="date", type="date", width="100%", value=event['date']),
+                        rx.input(placeholder="Event Location", name="location", width="100%", value=event['location']),
+                        rx.input(placeholder="Event Description", name="description", width="100%",
+                                 value=event['description']),
                         rx.input(placeholder="Age Range Lowest", type="number", name="low_age", width="100%"),
                         rx.input(placeholder="Age Range Highest", type="number", name="high_age", width="100%"),
                         # rx.input(placeholder="Price Lowest", name="low_age", width="100%"),
@@ -1029,11 +1446,12 @@ def edit_event():
                             [e.value for e in EventStatus.list()],
                             name="status"
                             , width="100%", value=event['status']),
-                        rx.input(placeholder="Capacity", type="number", name="capacity", width="100%",value=event['capacity']),
+                        rx.input(placeholder="Capacity", type="number", name="capacity", width="100%",
+                                 value=event['capacity']),
                         rx.button("Submit Event", type_="submit"),
                         # rx.button("Submit Event", on_click=CreateEvent.make_event),
                     ),
-                    on_submit=CreateEvent.make_event
+                    on_submit=EditEvent.make_event
                 ),
 
                 width="100%"
@@ -1043,25 +1461,24 @@ def edit_event():
             #     rx.dialog.trigger(rx.button("Create New Perk", size="3")),
             #     perkPopover()
             # ),
-            rx.cond(
-                CreateEvent.event_created,
-                rx.dialog.root(
-                    rx.dialog.trigger(rx.button("Create New Perk", size="3")),
-                    perkPopover()
-                )
-            ),
+            # rx.cond(
+            #     CreateEvent.event_created,
+            #     rx.dialog.root(
+            #         rx.dialog.trigger(rx.button("Create New Perk", size="3")),
+            #         editPerkPopover()
+            #     )
+            # ),
             rx.grid(
                 rx.foreach(
-                    CreateEvent.perks,
+                    EditEvent.perks,
                     lambda perk: rx.card(
                         rx.vstack(
                             rx.heading(perk["name"]),
-                            rx.text(f"Price : {perk["price"]}"),
-                            rx.text(f"Description : {perk["description"]}"),
-                            rx.text(f"Age Range : {perk["age_range"]}"),
-                            rx.text(f"Duration : {perk["duration"]} hour"),
-                            rx.text(f"Available Slots : {perk["available_slots"]}"),
-
+                            rx.text(f"Price : {perk['price']}"),
+                            rx.text(f"Description : {perk['description']}"),
+                            rx.text(f"Age Range : {perk['age_range']}"),
+                            rx.text(f"Duration : {perk['duration']} hour"),
+                            rx.text(f"Available Slots : {perk['available_slots']}"),
                             rx.button("Delete"),
                             rx.button("Edit"),
                         )
@@ -1328,10 +1745,10 @@ class UserHomePage(AppState):
         attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
         if attendee:
             # events = UserServices.get_attending_events(attendee.id)
-            events = UserServices.get_attending_events(UserServices.get_attendee_from_base_user(self.current_user_id).id)
+            events = UserServices.get_attending_events(
+                UserServices.get_attendee_from_base_user(self.current_user_id).id)
             # events = attendee.events
             self.attending_events = [event.to_dict() for event in events]
-
 
 
 @rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)
