@@ -5,7 +5,7 @@ import reflex as rx
 import sqlalchemy
 
 from eventManagement.models.attendee import Attendee
-from eventManagement.models.event import Event, EventType, EventStatus
+from eventManagement.models.event import Event, EventType, EventStatus, Perk
 from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees, seed_all_organisers, \
     seed_all_registrations
 from eventManagement.models.seed_data import disperse_users_into_roles
@@ -423,6 +423,8 @@ class EventInnards(DashboardState):
     perks: list[dict] = []
     attenders: list[dict] = []
     regos: list[dict] = []
+    approved_regos: list[dict] = []
+    rejected_regos: list[dict] = []
     event_id: int
     role = "None"
     # events: list[dict] = []
@@ -463,7 +465,52 @@ class EventInnards(DashboardState):
             # self.selected_event = event.to_dict()
             regos_temp = EventServices.get_all_registrations_on_event(event_id)
             self.regos = [registration.to_dict() for registration in regos_temp]
+            with rx.session() as session:
+                for rego in self.regos:
+                    perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
+                    rego["perk_name"] = perk.name if perk else "Unknown"
+
+
+            regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+            self.approved_regos = [registration.to_dict() for registration in regos_temp]
+
+            regos_temp = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+            self.rejected_regos = [registration.to_dict() for registration in regos_temp]
+
             return rx.redirect("/organised-event-detail")
+        else:
+            print("ERROR: Event is None when expected not to be.")
+
+    @rx.event
+    async def fetch_and_redirect_EDIT_organised_event(self, event_id: int):
+        from eventManagement.services.eventServices import EventServices
+        event = EventServices.get_event_by_id(event_id)
+        if event:
+            self.selected_event = event.to_dict()
+            perks_temp = EventServices.get_event_perks_from_event_id(event_id)
+            self.perks = [perk.to_dict() for perk in perks_temp]
+
+
+            # self.selected_event = event.to_dict()
+            attenders_temp = UserServices.get_attenders(event_id)
+            self.attenders = [user.to_dict() for user in attenders_temp]
+
+            # self.selected_event = event.to_dict()
+            regos_temp = EventServices.get_all_registrations_on_event(event_id)
+            self.regos = [registration.to_dict() for registration in regos_temp]
+            with rx.session() as session:
+                for rego in self.regos:
+                    perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
+                    rego["perk_name"] = perk.name if perk else "Unknown"
+
+
+            regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+            self.approved_regos = [registration.to_dict() for registration in regos_temp]
+
+            regos_temp = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+            self.rejected_regos = [registration.to_dict() for registration in regos_temp]
+
+            return rx.redirect("/edit-event")
         else:
             print("ERROR: Event is None when expected not to be.")
 
@@ -621,12 +668,12 @@ def event_detail():
             width="100%",
             margin_bottom="6",
         ),
-        rx.heading("Attenders", size="4", margin_bottom="2"),
+        rx.heading("Registrations", size="4", margin_bottom="2"),
         rx.vstack(
             rx.foreach(
                 EventInnards.regos,
-                lambda user: rx.card(
-                    rx.text(f"{user['event_id']} (User ID: {user['user_id']})"),
+                lambda rego: rx.card(
+                    rx.text(f"Registration id : {rego['id']} | Approved : {(rego['approved'])} | Perk : {rego['perk_name']}"),
                     padding="3",
                     shadow="xs",
                     border_radius="xl",
@@ -639,6 +686,8 @@ def event_detail():
         ),
         rx.button(
             "Edit Event",
+            on_click=EventInnards.fetch_and_redirect_EDIT_organised_event(event["id"]),
+            # on_click=rx.redirect("/edit-event"),
             # on_click=DashboardState.book_selected_event,
             color_scheme="blue",
             size="4"
@@ -784,6 +833,246 @@ def user_home_page():
     #
     #     )
     # )
+class EditEvent(AppState):
+    perks: list[dict] = []
+    event_type: dict
+    edit_perks_popover: bool = False
+    event_created: bool = False
+    form_data: dict = {}
+    event_id: int = -1
+    organised_events: list[dict] = []
+
+    def mark_created(self):
+        self.event_created = True
+
+    # TODO lazy load events, if no events organsied make organiser
+    @rx.event
+    async def balls(self):
+        self.event_type = {e.value: e.value.capitalize() for e in EventType}
+        if self.event_id > 0:
+            await self.load_perks()
+        print("meow")
+        self.event_created = False;
+        from eventManagement.services.user_services import UserServices
+        organiser = UserServices.get_organiser_from_base_user(self.current_user_id)
+
+        if (organiser == None):
+            UserServices.make_organiser(self.current_user_id)
+        else:
+            events = UserServices.get_organised_events(organiser.id)
+            self.organised_events = [event.to_dict() for event in events]
+
+        from eventManagement.services.eventServices import EventServices
+        # perks_temp = EventServices.get_event_perks_from_event_id(0)
+        # if perks_temp:
+        # self.perks = [perk.to_dict() for perk in perks_temp]
+
+    @rx.event
+    async def load_perks(self):
+        from eventManagement.services.eventServices import EventServices
+        perks_temp = EventServices.get_event_perks_from_event_id(self.event_id)
+        if perks_temp:
+            self.perks = [perk.to_dict() for perk in perks_temp]
+        else:
+            self.perks = []
+
+    @rx.event
+    async def make_event(self, formData: dict):
+        date_str = formData.get("date")
+        # if date_str:
+        #     date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        # else:
+        #     date_obj = None
+        date_str = formData.get("date")
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        print("DS:LGDL:GJDS")
+        print(date_str)
+        print(date_obj)
+        print("DS:LGDL:GJDS")
+        name = formData.get("name")
+        duration = formData.get("duration")
+        # date = formData.get("date")
+        date = date_obj
+        location = formData.get("location")
+        desc = formData.get("description")
+        low_age = formData.get("low_age")
+        high_age = formData.get("high_age")
+        capacity = formData.get("capacity")
+        event_type = formData.get("type")
+        event_status = formData.get("status")
+        age_range = str(low_age) + " to " + str(high_age)
+        from eventManagement.services.eventServices import EventServices
+        newEventBALLS = EventServices.create_event(name, duration, event_type, date, location, 0, 0, desc, age_range,
+                                                   event_status,
+                                                   capacity, self.current_user_id)
+
+        self.event_created = True
+        self.event_id = newEventBALLS.get("id")
+        self.event_created = True
+
+        await self.load_perks()
+
+    @rx.event
+    async def make_new_perk(self):
+        print("make new perk")
+
+    @rx.event
+    async def edit_perk(self):
+        print("edit perk")
+
+    @rx.event
+    async def handleSubmitOnNewPerk(self, formData: dict):
+        print("wahoo")
+        print("bacon bacon bacon")
+        username = formData.get("perk_name")
+        password = formData.get("perk_price")
+        print(username + " " + password)
+        from eventManagement.services.eventServices import EventServices
+        EventServices.set_perk(formData.get("perk_name"), formData.get("perk_duration"), formData.get("perk_price"),
+                               formData.get("perk_description"),
+                               str(formData.get("perk_age_range_highest")) + " to" + str(
+                                   formData.get("perk_age_range_lowest")), formData.get("perk_slots"), self.event_id, )
+
+        await self.load_perks()
+
+
+def perkPopover():
+    return rx.dialog.content(
+        rx.dialog.title("New Perk"),
+        rx.container(
+            rx.vstack(
+                rx.form(
+                    rx.vstack(
+                        rx.input(
+                            placeholder="Name",
+                            name="perk_name",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Price",
+                            name="perk_price",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Description",
+                            name="perk_description",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Age Range Lowest",
+                            name="perk_age_range_lowest",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Age Range Highest",
+                            name="perk_age_range_highest",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Duration",
+                            name="perk_duration",
+                            type="number",
+                            width="100%"
+
+                        ),
+                        rx.input(
+                            placeholder="Available Slots",
+                            name="perk_slots",
+                            type="number",
+                            width="100%"
+                        ),
+                        rx.button("Submit", type="submit"),
+                        align="center",
+                    ),
+                    on_submit=CreateEvent.handleSubmitOnNewPerk,
+                    reset_on_submit=True,
+                ),
+            ),
+        ),
+        rx.dialog.close(
+            rx.button("Close", size="3"),
+        ),
+    ),
+
+
+@rx.page(route="/edit-event", on_load=EditEvent.balls())
+def edit_event():
+    event = EventInnards.selected_event
+    return rx.center(
+        rx.vstack(
+            rx.heading("Edit Event!"),
+            rx.card(
+                rx.form(
+                    rx.vstack(
+                        rx.input(placeholder="name", name="name", width="100%", value=event['name']),
+                        rx.input(placeholder="Event Duration", name="duration", type="number", width="100%", value=event['duration']),
+                        rx.select(
+                            [e.value for e in EventType.list()],
+                            name="type"
+                            , width="100%", value=event['event_type']),
+                        rx.input(placeholder="Event Date", name="date", type="date", width="100%",value=event['date']),
+                        rx.input(placeholder="Event Location", name="location", width="100%",value=event['location']),
+                        rx.input(placeholder="Event Description", name="description", width="100%",value=event['description']),
+                        rx.input(placeholder="Age Range Lowest", type="number", name="low_age", width="100%"),
+                        rx.input(placeholder="Age Range Highest", type="number", name="high_age", width="100%"),
+                        # rx.input(placeholder="Price Lowest", name="low_age", width="100%"),
+                        # rx.input(placeholder="Price Highest", name="high_age", width="100%"),
+                        rx.select(
+                            [e.value for e in EventStatus.list()],
+                            name="status"
+                            , width="100%", value=event['status']),
+                        rx.input(placeholder="Capacity", type="number", name="capacity", width="100%",value=event['capacity']),
+                        rx.button("Submit Event", type_="submit"),
+                        # rx.button("Submit Event", on_click=CreateEvent.make_event),
+                    ),
+                    on_submit=CreateEvent.make_event
+                ),
+
+                width="100%"
+            ),
+            # rx.button("Create New Perk", on_click=perkPopover()),
+            # rx.dialog.root(
+            #     rx.dialog.trigger(rx.button("Create New Perk", size="3")),
+            #     perkPopover()
+            # ),
+            rx.cond(
+                CreateEvent.event_created,
+                rx.dialog.root(
+                    rx.dialog.trigger(rx.button("Create New Perk", size="3")),
+                    perkPopover()
+                )
+            ),
+            rx.grid(
+                rx.foreach(
+                    CreateEvent.perks,
+                    lambda perk: rx.card(
+                        rx.vstack(
+                            rx.heading(perk["name"]),
+                            rx.text(f"Price : {perk["price"]}"),
+                            rx.text(f"Description : {perk["description"]}"),
+                            rx.text(f"Age Range : {perk["age_range"]}"),
+                            rx.text(f"Duration : {perk["duration"]} hour"),
+                            rx.text(f"Available Slots : {perk["available_slots"]}"),
+
+                            rx.button("Delete"),
+                            rx.button("Edit"),
+                        )
+                    )
+                ),
+                columns="3",
+                spacing="4",
+            ),
+            width="80%"
+        )
+    )
 
 
 class CreateEvent(AppState):

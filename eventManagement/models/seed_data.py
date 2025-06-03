@@ -319,6 +319,7 @@ def seed_all_registrations():
         session.commit()
 
 
+# TODO only one organiser per event
 def seed_all_organisers():
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))

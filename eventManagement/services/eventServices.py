@@ -101,7 +101,36 @@ class EventServices(rx.State):
         print("get registrations of event")
         with rx.session() as session:
             all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id)).all()
+        return all_registrations
+        # with rx.session() as session:
+        #     regos = session.exec(Registration.select().where(Registration.event_id == event_id)).all()
+        #     enriched_regos = []
+        #
+        #     for reg in regos:
+        #         perk = session.exec(Perk.select().where(Perk.id == reg.perk_id)).first()
+        #         enriched_regos.append({
+        #             "id": reg.id,
+        #             "approved": reg.approved,
+        #             "perk_id": reg.perk_id,
+        #             "perk_name": perk.name if perk else "Unknown"
+        #         })
+        #
+        #     return enriched_regos
 
+
+    @staticmethod
+    def get_all_APPROVED_registrations_on_event(event_id: int):
+        print("get registrations of event")
+        with rx.session() as session:
+            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id and Registration.approved == True)).all()
+        return all_registrations
+
+
+    @staticmethod
+    def get_all_REJECTED_registrations_on_event(event_id: int):
+        print("get registrations of event")
+        with rx.session() as session:
+            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id and Registration.approved == False)).all()
         return all_registrations
     #
     # @staticmethod
