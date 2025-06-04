@@ -443,56 +443,59 @@ def event_detail():
     #     padding="4",
     # )
     return rx.container(
-        rx.card(
-            rx.vstack(
-                rx.heading(event["name"], size="4"),
-                rx.text(f"Type: {event['event_type']}"),
-                rx.text(f"Location: {event['location']}"),
-                rx.text(f"Date: {event['date']}"),
-                rx.text(f"Age Range: {event['age_range']}"),
-                spacing="3",
-                align="start"
+        rx.vstack(
+            home_header(),
+            rx.card(
+                rx.vstack(
+                    rx.heading(event["name"], size="7"),
+                    rx.text(f"Type: {event['event_type']}"),
+                    rx.text(f"Location: {event['location']}"),
+                    rx.text(f"Date: {event['date']}"),
+                    rx.text(f"Age Range: {event['age_range']}"),
+                    spacing="3",
+                    align="start"
+                ),
+                padding="6",
+                shadow="md",
+                border_radius="3xl",
+                margin_bottom="6",
             ),
-            padding="6",
-            shadow="md",
-            border_radius="3xl",
-            margin_bottom="6",
-        ),
 
-        rx.heading("Perks", size="4", margin_bottom="2"),
-        rx.grid(
-            rx.foreach(
-                EventInnards.perks,
-                lambda perk: rx.card(
-                    rx.vstack(
-                        rx.text(perk["name"], font_weight="bold"),
-                        rx.text(f"Price: ${perk['price']}"),
-                        rx.text(f"Description: {perk['description']}"),
-                        rx.text(f"Age Range: {perk['age_range']}"),
-                        rx.text(f"Duration: {perk['duration']}"),
-                        rx.text(f"Available Slots: {perk['available_slots']}"),
-                        spacing="2",
-                        align="start"
-                    ),
-                    padding="4",
-                    shadow="sm",
-                    border_radius="xl",
-                )
+            rx.heading("Perks", size="6", margin_bottom="2"),
+            rx.grid(
+                rx.foreach(
+                    EventInnards.perks,
+                    lambda perk: rx.card(
+                        rx.vstack(
+                            rx.text(perk["name"], font_weight="bold"),
+                            rx.text(f"Price: ${perk['price']}"),
+                            rx.text(f"Description: {perk['description']}"),
+                            rx.text(f"Age Range: {perk['age_range']}"),
+                            rx.text(f"Duration: {perk['duration']}"),
+                            rx.text(f"Available Slots: {perk['available_slots']}"),
+                            spacing="2",
+                            align="start"
+                        ),
+                        padding="4",
+                        shadow="sm",
+                        border_radius="xl",
+                    )
+                ),
+                columns="2",
+                spacing="4",
+                width="100%",
+                margin_bottom="6",
             ),
-            columns="2",
-            spacing="4",
-            width="100%",
-            margin_bottom="6",
-        ),
-        rx.button(
-            "Book Event",
-            # on_click=DashboardState.book_selected_event,
-            color_scheme="green",
-            size="4"
-        ),
+            rx.button(
+                "Book Event",
+                # on_click=DashboardState.book_selected_event,
+                color_scheme="green",
+                size="4"
+            ),
 
-        padding="6",
-        spacing="6"
+            padding="5",
+            spacing="5",
+        ),
     )
 
 
@@ -725,60 +728,70 @@ class UserHomePage(AppState):
 def user_home_page():
     AppState.fetch_current_user()
     return rx.container(
-        home_header(),
-
-        rx.card(
-            rx.vstack(
-                rx.heading(f"Welcome {AppState.selected_user['name']}!"),
-                rx.text(f"Email: {AppState.selected_user['email']}"),
-                rx.text(f"Username: {AppState.selected_user['username']}"),
-                rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
-                align="start",
-                spacing="2",
-            ),
-            shadow="md",
-            padding="4",
-            border_radius="5xl",
-        ),
-
-        rx.cond(
-            UserHomePage.attending_events,
-            rx.vstack(
-                rx.heading("Your Attending Events", size="4", padding_bottom="2"),
-                rx.grid(
-                    rx.foreach(
-                        UserHomePage.attending_events,
-                        lambda event: rx.card(
-                            rx.vstack(
-                                rx.text(event["name"], font_weight="bold"),
-                                rx.text(event["event_type"]),
-                                rx.text(event["location"]),
-                                rx.text(event["date"]),
-                            ),
-                            height="25vh",
-                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
-                        )
+        rx.vstack(
+            home_header(),
+            rx.dialog.root(
+                rx.dialog.content(
+                    rx.dialog.title(rx.heading(f"Welcome {AppState.selected_user['name']}!"),),
+                    rx.dialog.description(
+                        rx.vstack(
+                            rx.text(f"Email: {AppState.selected_user['email']}"),
+                            rx.text(f"Username: {AppState.selected_user['username']}"),
+                            rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
+                            align="start",
+                            spacing="2",
+                        ),
+                        shadow="md",
+                        padding="20",
+                        border_radius="5xl",
                     ),
-                    columns="2",
-                    spacing="4",
-                    width="100%",
+                    padding="20",
                 ),
-                align="start",
-                spacing="4",
-                padding_top="4",
+                default_open=True,
+                padding="20px",
             ),
-            rx.text("Not attending any events.")
+            rx.cond(
+                UserHomePage.attending_events,
+                rx.vstack(
+                    rx.heading(
+                        "Your Attending Events",
+                        size="8",
+                        weight="bold",
+                        padding_top="20px",
+                        padding_bottom="10px"),
+                    rx.grid(
+                        rx.foreach(
+                            UserHomePage.attending_events,
+                            lambda event: rx.card(
+                                rx.vstack(
+                                    rx.heading(event["name"], font_weight="bold", size="6"),
+                                    rx.text(rx.text.strong("Event Type: "), event["event_type"]),
+                                    rx.text(rx.text.strong("Location: "), event["location"]),
+                                    rx.text(rx.text.strong("Date: "), event["date"]),
+                                ),
+                                height="25vh",
+                                on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                            ),
+                        ),
+                        columns="2",
+                        spacing="4",
+                        width="100%",
+                    ),
+                    align="start",
+                    spacing="4",
+                    padding_top="4",
+                ),
+                rx.text("Not attending any events.")
+            ),
+            rx.button(
+                "Browse Events",
+                on_click=rx.redirect("/dashboard"),
+                color_scheme="blue",
+                size="3",
+                margin_top="5"
+            ),
         ),
-
-        rx.button(
-            "Browse Events",
-            on_click=rx.redirect("/dashboard"),
-            color_scheme="blue",
-            size="3",
-            margin_top="4"
-        )
     )
-
 
 def navbar_link(text: str, url: str) -> rx.Component:
     return rx.link(
@@ -986,14 +999,14 @@ app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
 app.add_page(pureTesting(), route="/testing")
 
-#
-seed_users()
-disperse_users_into_roles()
-seed_events()
-seed_one_attendee()
-seed_all_attendees()
-seed_all_organisers()
-seed_perks()
+
+# seed_users()
+# disperse_users_into_roles()
+# seed_events()
+# seed_one_attendee()
+# seed_all_attendees()
+# seed_all_organisers()
+# seed_perks()
 
 # TODO
 # organiser portal
