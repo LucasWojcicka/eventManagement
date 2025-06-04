@@ -805,15 +805,16 @@ def header() -> rx.Component:
         rx.desktop_only(
             rx.hstack(
                 rx.hstack(
-                    rx.image(
-                        src="/logo.jpg",
-                        width="2.25em",
-                        height="auto",
-                        border_radius="25%",
+                    rx.link(
+                        rx.image(
+                            src="/logo.jpg",
+                            width="2.25em",
+                            height="auto",
+                            border_radius="25%",
+                        ),
+                        href="/home"
                     ),
-                    rx.heading(
-                        "Zen Planner", size="7", weight="bold"
-                    ),
+                    rx.link(rx.heading("Zen Planner", size="7", weight="bold"),href="/home"),
                     align_items="center",
                 ),
                 rx.hstack(
@@ -858,15 +859,16 @@ def home_header() -> rx.Component:
         rx.desktop_only(
             rx.hstack(
                 rx.hstack(
-                    rx.image(
-                        src="/logo.jpg",
-                        width="2.25em",
-                        height="auto",
-                        border_radius="25%",
+                    rx.link(
+                        rx.image(
+                            src="/logo.jpg",
+                            width="2.25em",
+                            height="auto",
+                            border_radius="25%",
+                        ),
+                        href="/home"
                     ),
-                    rx.heading(
-                        "Zen Planner", size="7", weight="bold"
-                    ),
+                    rx.link(rx.heading("Zen Planner", size="7", weight="bold"),href="/home"),
                     align_items="center",
                 ),
                 rx.hstack(
