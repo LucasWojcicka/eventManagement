@@ -2,10 +2,12 @@ import reflex as rx
 import datetime
 
 from eventManagement.models.attendee import Attendee
-from eventManagement.models.event import Event
+from eventManagement.models.event import Event, Registration
 from eventManagement.models.organiser import Organiser
 from eventManagement.models.user import User
 from typing import Optional, List
+
+from eventManagement.services.eventServices import EventServices
 
 
 class UserServices(rx.State):
@@ -89,6 +91,42 @@ class UserServices(rx.State):
     #
     #         print(f"Found {len(matching_attendees)} attenders for event {event_id}")
     #         return matching_attendees
+    @staticmethod
+    def get_user_registrations(user_id: int):
+        with rx.session() as session:
+            all_regos = session.exec(Registration.select()).all()
+            user_regos = []
+            for rego in all_regos:
+                if rego.user_id == user_id:
+                    user_regos.append(rego)
+            return user_regos
+
+    @staticmethod
+    def registration_representer(registrations: list):
+        readable_registrations = []
+
+        for rego in registrations:
+            readable = {
+                "id" : rego.id,
+                "price" : rego.price,
+                "approved" : rego.approved,
+                "user_id" : rego.user_id,
+                "event_id" : rego.event_id,
+                "perk_id" : rego.perk_id,
+                "registration_date" : rego.registration_date,
+                "approved_date" : rego.approved_date,
+                "user_name" : UserServices.get_user_by_id(rego.user_id).name,
+                "event_name" : EventServices.get_event_by_id(rego.event_id).name,
+                "event_type" : EventServices.get_event_by_id(rego.event_id).event_type,
+                "event_status" : EventServices.get_event_by_id(rego.event_id).status,
+                "event_date" : EventServices.get_event_by_id(rego.event_id).date,
+                "perk_name" : EventServices.get_perk_by_id(rego.perk_id).name,
+            }
+            readable_registrations.append(readable)
+
+        return readable_registrations
+
+
 
     @staticmethod
     def get_attenders(event_id: int):

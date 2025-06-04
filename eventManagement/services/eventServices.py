@@ -97,6 +97,12 @@ class EventServices(rx.State):
         return attenders
 
     @staticmethod
+    def get_perk_by_id(perk_id: int):
+        print("get perk by id")
+        with rx.session() as session:
+            return session.exec(Perk.select().where(Perk.id == perk_id)).first()
+
+    @staticmethod
     def get_all_registrations_on_event(event_id: int):
         print("get registrations of event")
         with rx.session() as session:
@@ -117,21 +123,67 @@ class EventServices(rx.State):
         #
         #     return enriched_regos
 
+    @staticmethod
+    def make_rego(price : int, event_id : int, user_id : int, perk_id : int):
+        with rx.session() as session:
+            new_rego = Registration(
+                price=price,
+                approved=0,
+                event_id=event_id,
+                user_id=user_id,
+                perk_id=perk_id,
+                registration_date=datetime.today()
+            )
+            session.add(new_rego)
+            session.commit()
+            # new_event = Event(name=name,
+            #                   duration=duration,
+            #                   event_type=event_type,
+            #                   date=date,
+            #                   location=location,
+            #                   price_range_lowest=price_range_lowest,
+            #                   price_range_highest=price_range_highest,
+            #                   description=description,
+            #                   age_range=age_range,
+            #                   attendees_num=0,
+            #                   status=status,
+            #                   capacity=capacity,
+            #                   occupied_capacity=0
+            #                   )
+            # organiser = session.exec(Organiser.select().where(Organiser.user_id == user_id)).first()
+            # session.add(new_event)
+            # print("BALLS SESSION ADD NEW EVENT")
+            # session.flush()
+            # print("FLUSH")
+            # print(f"{new_event}")
+            # organiser.events.append(new_event)
+            # session.commit()
+            # return new_event.to_dict()
+
 
     @staticmethod
     def get_all_APPROVED_registrations_on_event(event_id: int):
-        print("get registrations of event")
+        print("get ARPPOVED of event")
         with rx.session() as session:
-            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id and Registration.approved == True)).all()
-        return all_registrations
+            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id))
+            approved_regos = []
+            for rego in all_registrations:
+                if rego.approved == True:
+                    approved_regos.append(rego)
+            return approved_regos
+
 
 
     @staticmethod
     def get_all_REJECTED_registrations_on_event(event_id: int):
-        print("get registrations of event")
+        print("get ARPPOVED of event")
         with rx.session() as session:
-            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id and Registration.approved == False)).all()
-        return all_registrations
+            all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id))
+            rejected_regos = []
+            for rego in all_registrations:
+                if rego.approved == False:
+                    rejected_regos.append(rego)
+            return rejected_regos
     #
     # @staticmethod
     # def get_attenders(event_id: int):
@@ -184,6 +236,17 @@ class EventServices(rx.State):
     def get_event_perks_from_event_id(event_id: int):
         with rx.session() as session:
             return session.exec(Perk.select().where(Perk.event_id == event_id)).all()
+
+    @staticmethod
+    def get_remaining_perk_capacity(perk_id : int):
+        with rx.session() as session:
+            count = 0
+            all_registrations_on_perk = session.exec(Registration.select().where(Registration.perk_id == perk_id )).all()
+            for registrations in all_registrations_on_perk:
+                if(registrations.approved == True):
+                    count = count+1
+            return count
+
 
     # setters
     # @staticmethod
@@ -304,126 +367,126 @@ class EventServices(rx.State):
         print("make_perk")
 
 
-@staticmethod
-def set_event_name(event_id: int, event_name: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.name
-        event.name = event_name
-        print(before + " -> " + event.name)
-        session.add(event)
-        session.commit()
+    @staticmethod
+    def set_event_name(event_id: int, event_name: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.name
+            event.name = event_name
+            print(before + " -> " + event.name)
+            session.add(event)
+            session.commit()
 
 
-@staticmethod
-def set_event_duration(event_id: int, duration: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.duration
-        event.duration = duration
-        session.add(event)
-        print(str(before) + " -> " + str(event.duration))
-        session.commit()
+    @staticmethod
+    def set_event_duration(event_id: int, duration: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.duration
+            event.duration = duration
+            session.add(event)
+            print(str(before) + " -> " + str(event.duration))
+            session.commit()
 
 
-@staticmethod
-def set_event_event_type(event_id: int, event_type: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.event_type
-        event.duration = event_type
-        session.add(event)
-        print(str(before) + " -> " + str(event.event_type))
-        session.commit()
+    @staticmethod
+    def set_event_event_type(event_id: int, event_type: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.event_type
+            event.duration = event_type
+            session.add(event)
+            print(str(before) + " -> " + str(event.event_type))
+            session.commit()
 
 
-@staticmethod
-def set_event_date(event_id: int, date: datetime):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.date
-        event.date = date
-        session.add(event)
-        print(str(before) + " -> " + str(event.date))
-        session.commit()
+    @staticmethod
+    def set_event_date(event_id: int, date: datetime):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.date
+            event.date = date
+            session.add(event)
+            print(str(before) + " -> " + str(event.date))
+            session.commit()
 
 
-@staticmethod
-def set_event_location(event_id: int, location: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.location
-        event.location = location
-        session.add(event)
-        print(str(before) + " -> " + str(event.location))
-        session.commit()
+    @staticmethod
+    def set_event_location(event_id: int, location: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.location
+            event.location = location
+            session.add(event)
+            print(str(before) + " -> " + str(event.location))
+            session.commit()
 
 
-@staticmethod
-def set_event_price_range_lowest(event_id: int, price_range_lowest: int):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.price_range_lowest
-        event.price_range_lowest = price_range_lowest
-        session.add(event)
-        print(str(before) + " -> " + str(event.price_range_lowest))
-        session.commit()
+    @staticmethod
+    def set_event_price_range_lowest(event_id: int, price_range_lowest: int):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.price_range_lowest
+            event.price_range_lowest = price_range_lowest
+            session.add(event)
+            print(str(before) + " -> " + str(event.price_range_lowest))
+            session.commit()
 
 
-@staticmethod
-def set_event_price_range_highest(event_id: int, price_range_highest: int):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.price_range_highest
-        event.price_range_highest = price_range_highest
-        session.add(event)
-        print(str(before) + " -> " + str(event.price_range_highest))
-        session.commit()
+    @staticmethod
+    def set_event_price_range_highest(event_id: int, price_range_highest: int):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.price_range_highest
+            event.price_range_highest = price_range_highest
+            session.add(event)
+            print(str(before) + " -> " + str(event.price_range_highest))
+            session.commit()
 
 
-@staticmethod
-def set_event_description(event_id: int, description: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.description
-        event.description = description
-        session.add(event)
-        print(str(before) + " -> " + str(event.description))
-        session.commit()
+    @staticmethod
+    def set_event_description(event_id: int, description: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.description
+            event.description = description
+            session.add(event)
+            print(str(before) + " -> " + str(event.description))
+            session.commit()
 
 
-@staticmethod
-def set_event_age_range(event_id: int, max: int, min: int):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        range = str(min) + " to " + str(max)
-        before = event.age_range
-        event.age_range = range
-        session.add(event)
-        print(str(before) + " -> " + str(event.age_range))
-        session.commit()
+    @staticmethod
+    def set_event_age_range(event_id: int, max: int, min: int):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            range = str(min) + " to " + str(max)
+            before = event.age_range
+            event.age_range = range
+            session.add(event)
+            print(str(before) + " -> " + str(event.age_range))
+            session.commit()
 
 
-@staticmethod
-def set_event_event_status(event_id: int, event_status: str):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.event_status
-        event.event_status = event_status
-        session.add(event)
-        print(str(before) + " -> " + str(event.event_status))
-        session.commit()
+    @staticmethod
+    def set_event_event_status(event_id: int, event_status: str):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.event_status
+            event.event_status = event_status
+            session.add(event)
+            print(str(before) + " -> " + str(event.event_status))
+            session.commit()
 
 
-@staticmethod
-def set_event_capacity(event_id: int, capacity: int):
-    with rx.session() as session:
-        event = EventServices.get_event_by_id(event_id)
-        before = event.capacity
-        event.capacity = capacity
-        session.add(event)
-        print(str(before) + " -> " + str(event.capacity))
-        session.commit()
+    @staticmethod
+    def set_event_capacity(event_id: int, capacity: int):
+        with rx.session() as session:
+            event = EventServices.get_event_by_id(event_id)
+            before = event.capacity
+            event.capacity = capacity
+            session.add(event)
+            print(str(before) + " -> " + str(event.capacity))
+            session.commit()
 
 # @staticmethod
 # def get_organised_events(organiser_id: int):

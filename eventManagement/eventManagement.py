@@ -426,7 +426,8 @@ class EventInnards(DashboardState):
     approved_regos: list[dict] = []
     rejected_regos: list[dict] = []
     event_id: int
-    role = "None"
+    # role = "None"
+
 
     # events: list[dict] = []
     # selected_event: dict | None = None
@@ -457,6 +458,11 @@ class EventInnards(DashboardState):
             self.selected_event = event.to_dict()
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
+
+
+
+            # self.perks = UserServices.registration_representer(perks_temp)
+
             return rx.redirect("/book-ticket")
         else:
             print("ERROR: Event is None when expected not to be.")
@@ -482,11 +488,21 @@ class EventInnards(DashboardState):
                     perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
                     rego["perk_name"] = perk.name if perk else "Unknown"
 
-            regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
-            self.approved_regos = [registration.to_dict() for registration in regos_temp]
+            regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+            # self.approved_regos = [registration.to_dict() for registration in regos_temp_app]
 
-            regos_temp = EventServices.get_all_REJECTED_registrations_on_event(event_id)
-            self.rejected_regos = [registration.to_dict() for registration in regos_temp]
+            regos_temp_rej = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+            # self.rejected_regos = [registration.to_dict() for registration in regos_temp_rej]
+
+            # approved_regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+            # # self.approved_regos = [registration.to_dict() for registration in regos_temp]
+            self.approved_regos = UserServices.registration_representer(regos_temp_app)
+            self.rejected_regos = UserServices.registration_representer(regos_temp_rej)
+            #
+            #
+            # rejected_regos_temp = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+            # # self.rejected_regos = [registration.to_dict() for registration in regos_temp]
+            # self.rejected_regos = UserServices.registration_representer(rejected_regos_temp)
 
             return rx.redirect("/organised-event-detail")
         else:
@@ -513,11 +529,11 @@ class EventInnards(DashboardState):
                     perk = session.exec(Perk.select().where(Perk.id == rego["perk_id"])).first()
                     rego["perk_name"] = perk.name if perk else "Unknown"
 
-            regos_temp = EventServices.get_all_APPROVED_registrations_on_event(event_id)
-            self.approved_regos = [registration.to_dict() for registration in regos_temp]
+            regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+            self.approved_regos = [registration.to_dict() for registration in regos_temp_app]
 
-            regos_temp = EventServices.get_all_REJECTED_registrations_on_event(event_id)
-            self.rejected_regos = [registration.to_dict() for registration in regos_temp]
+            regos_temp_rej = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+            self.rejected_regos = [registration.to_dict() for registration in regos_temp_rej]
 
             return rx.redirect("/edit-event")
         else:
@@ -532,16 +548,21 @@ class TicketBooking(AppState):
 
     selected_perks: list[str] = []
     selected_perk: str = ""
-    subtotal : int = 0
+    selected_perk_id: int = -1
+    subtotal: int = 0
 
     @rx.event
-    def pay(self, event : dict):
+    def pay(self, event: dict):
         print(f"PAY PAY PAY {self.selected_perk} {self.subtotal} {event['name']}")
+        EventServices.make_rego(self.subtotal, event['id'], self.current_user_id, self.selected_perk_id)
+        return rx.redirect("/home")
+
     @rx.event
-    def select_perk(self, perk_name: str, perk_price : int):
+    def select_perk(self, perk_name: str, perk_price: int, perk_id: int):
         print(self.selected_perk)
         self.selected_perk = perk_name
         self.subtotal = perk_price
+        self.selected_perk_id = perk_id
         print(self.selected_perk)
 
     # @rx.event
@@ -717,7 +738,7 @@ def make_registration():
                             rx.text(perk['description']),
                             spacing="1",
                             align="start",
-                            on_click = lambda p=perk: TicketBooking.select_perk(p["name"], p["price"]),
+                            on_click=lambda p=perk: TicketBooking.select_perk(p["name"], p["price"], p["id"]),
 
                         ),
                         padding="3",
@@ -731,8 +752,6 @@ def make_registration():
                         ),
                     )
                 ),
-
-
 
                 rx.text(f"Subtotal: {TicketBooking.subtotal}", font_weight="bold"),
 
@@ -1048,20 +1067,74 @@ def event_detail():
             margin_bottom="6",
         ),
         rx.heading("Registrations", size="4", margin_bottom="2"),
-        rx.vstack(
-            rx.foreach(
-                EventInnards.regos,
-                lambda rego: rx.card(
-                    rx.text(
-                        f"Registration id : {rego['id']} | Approved : {(rego['approved'])} | Perk : {rego['perk_name']}"),
-                    padding="3",
-                    shadow="xs",
-                    border_radius="xl",
-                    width="100%"
-                )
+        # rx.vstack(
+        #     rx.foreach(
+        #         EventInnards.regos,
+        #         lambda rego: rx.card(
+        #             rx.text(
+        #                 f"Registration id : {rego['id']} | Approved : {(rego['approved'])} | Perk : {rego['perk_name']}"),
+        #             padding="3",
+        #             shadow="xs",
+        #             border_radius="xl",
+        #             width="100%"
+        #         )
+        #     ),
+        #     spacing="2",
+        #     margin_bottom="6",
+        #     width="100%"
+        # ),
+        rx.grid(
+            rx.vstack(
+                rx.heading("Rejected", size="3"),
+                rx.foreach(
+                    EventInnards.rejected_regos,
+                    lambda rego: rx.card(
+                        rx.vstack(
+                            rx.text(f"Registration ID: {rego['id']}"),
+                            rx.text(f"Perk: {rego['perk_name']}"),
+                            rx.text(f"Registration: {rego['approved']}"),
+
+                            rx.button(
+                                "Approve",
+                                # on_click=lambda r=rego: EventInnards.toggle_approval(r["id"]),
+                                size="2",
+                                color_scheme="green"
+                            )
+                        ),
+                        padding="3",
+                        border_radius="xl",
+                        shadow="xs",
+                        width="100%"
+                    )
+                ),
+                spacing="2"
             ),
-            spacing="2",
-            margin_bottom="6",
+            rx.vstack(
+                rx.heading("Approved", size="3"),
+                rx.foreach(
+                    EventInnards.approved_regos,
+                    lambda rego: rx.card(
+                        rx.vstack(
+                            rx.text(f"Registration ID: {rego['id']}"),
+                            rx.text(f"Perk: {rego['perk_name']}"),
+                            rx.text(f"Registration: {rego['approved']}"),
+                            rx.button(
+                                "Reject",
+                                # on_click=lambda r=rego: EventInnards.toggle_approval(r["id"]),
+                                size="2",
+                                color_scheme="red"
+                            )
+                        ),
+                        padding="3",
+                        border_radius="xl",
+                        shadow="xs",
+                        width="100%"
+                    )
+                ),
+                spacing="2"
+            ),
+            columns="2",
+            spacing="6",
             width="100%"
         ),
         rx.button(
@@ -1740,15 +1813,21 @@ class UserHomePage(AppState):
 
     @rx.event
     async def kill_kill_murder_murder(self):
-        # self.fetch_current_user()
+        # from eventManagement.services.user_services import UserServices
+        # attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
+        # if attendee:
+        #     events = UserServices.get_attending_events(
+        #         UserServices.get_attendee_from_base_user(self.current_user_id).id)
+        #     self.attending_events = [event.to_dict() for event in events]
         from eventManagement.services.user_services import UserServices
-        attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
-        if attendee:
-            # events = UserServices.get_attending_events(attendee.id)
-            events = UserServices.get_attending_events(
-                UserServices.get_attendee_from_base_user(self.current_user_id).id)
-            # events = attendee.events
-            self.attending_events = [event.to_dict() for event in events]
+        # attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
+        # if attendee:
+        events = UserServices.get_user_registrations(self.current_user_id)
+        print(UserServices.registration_representer(events))
+        self.attending_events = UserServices.registration_representer(events)
+        # registration_rep = UserServices.registration_representer(events)
+        # self.attending_events = [registration.to_dict() for registration in registration_rep]
+        # self.attending_events = [registration.to_dict() for registration in events]
 
 
 @rx.page(route="/home", on_load=UserHomePage.kill_kill_murder_murder)
@@ -1774,19 +1853,25 @@ def user_home_page():
         rx.cond(
             UserHomePage.attending_events,
             rx.vstack(
-                rx.heading("Your Attending Events", size="4", padding_bottom="2"),
+                rx.heading("Your Registrations", size="4", padding_bottom="2"),
                 rx.grid(
                     rx.foreach(
                         UserHomePage.attending_events,
                         lambda event: rx.card(
                             rx.vstack(
-                                rx.text(event["name"], font_weight="bold"),
-                                rx.text(event["event_type"]),
-                                rx.text(event["location"]),
-                                rx.text(event["date"]),
+                                # rx.text(event["name"], font_weight="bold"),
+                                # rx.text(event["event_type"]),
+                                # rx.text(event["location"]),
+                                # rx.text(event["date"]),
+                                rx.text(f"{event["event_name"]} {event["event_type"]}", font_weight="bold"),
+                                rx.text(f"Perk : {event["perk_name"]}"),
+                                rx.text(f"Price : {event["price"]}"),
+                                rx.text(f"Event Date : {event["event_date"]}"),
+                                rx.text(f"Event Status : {event["event_status"]}"),
+                                rx.text(f"Approved : {event["approved"]}"),
                             ),
-                            height="25vh",
-                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"])
+                            height="30vh",
+                            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["event_id"])
                         )
                     ),
                     columns="2",
