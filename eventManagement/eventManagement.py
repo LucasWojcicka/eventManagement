@@ -291,26 +291,30 @@ class CreateAccount(AppState):
 #         ),
 #     )
 def index() -> rx.Component:
-    return rx.container(
-        rx.color_mode.button(position="top-right"),
-        rx.vstack(
-            rx.heading("Welcome To Zen Planner!", size="9"),
-            rx.text("Where anyone can organise an event!", size="5"),
-            rx.hstack(
-                rx.dialog.root(
-                    rx.dialog.trigger(rx.button("Create Account", size="4", variant="outline")),
-                    createAccountDialog()
+    return rx.hstack(
+        rx.container(
+            rx.color_mode.button(position="top-right"),
+            rx.vstack(
+                rx.heading("Welcome To Zen Planner!", size="9"),
+                rx.text("Where anyone can organise an event!", size="5"),
+                rx.hstack(
+                    rx.dialog.root(
+                        rx.dialog.trigger(rx.button("Create Account", size="4", variant="outline")),
+                        createAccountDialog()
+                    ),
+                    rx.dialog.root(
+                        rx.dialog.trigger(rx.button("Login", size="4")),
+                        loginDialog()
+                    ),
+                    spacing="4"
                 ),
-                rx.dialog.root(
-                    rx.dialog.trigger(rx.button("Login", size="4")),
-                    loginDialog()
-                ),
-                spacing="4"
+                spacing="5",
+                justify="center",
+                min_height="85vh",
             ),
-            spacing="5",
-            justify="center",
-            min_height="85vh",
+
         ),
+        background="center/cover url('/bg.png')",
     )
 
 
