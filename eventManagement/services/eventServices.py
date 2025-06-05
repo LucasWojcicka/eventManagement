@@ -175,6 +175,16 @@ class EventServices(rx.State):
             return approved_regos
 
 
+    @staticmethod
+    def remove_registration(user_registration : list):
+        with rx.session() as session:
+            for reg in user_registration:
+                reg = session.exec(Registration.select().where(Registration.id == reg.id)).one()
+                session.delete(reg)
+                session.commit()
+            session.commit()
+
+
 
     @staticmethod
     def get_all_REJECTED_registrations_on_event(event_id: int):

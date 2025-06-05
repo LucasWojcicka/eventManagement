@@ -102,6 +102,16 @@ class UserServices(rx.State):
             return user_regos
 
     @staticmethod
+    def get_user_registrations_for_event(user_id: int, event_id : int):
+        with rx.session() as session:
+            all_regos = session.exec(Registration.select()).all()
+            user_regos = []
+            for rego in all_regos:
+                if rego.user_id == user_id and rego.event_id == event_id:
+                    user_regos.append(rego)
+            return user_regos
+
+    @staticmethod
     def registration_representer(registrations: list):
         readable_registrations = []
 

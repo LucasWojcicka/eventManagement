@@ -428,6 +428,7 @@ class EventInnards(DashboardState):
     regos: list[dict] = []
     approved_regos: list[dict] = []
     rejected_regos: list[dict] = []
+    user_regos: list[dict] = []
     event_id: int
 
     # role = "None"
@@ -440,6 +441,12 @@ class EventInnards(DashboardState):
     #     from eventManagement.services.eventServices import EventServices
     #     events_list = EventServices.get_all_events()
     #     self.events = [event.to_dict() for event in events_list]
+
+    @rx.event
+    async def cancel_ticket(self, event_id : int):
+        user_registration = UserServices.get_user_registrations_for_event(self.current_user_id, event_id)
+        EventServices.remove_registration(user_registration)
+        return rx.redirect("/home")
 
     @rx.event
     async def approve_registration(self, rego_id: int,  event_id : int):
@@ -470,6 +477,11 @@ class EventInnards(DashboardState):
             self.selected_event = event.to_dict()
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
+
+            user_regs = UserServices.get_user_registrations(self.current_user_id)
+            self.user_regos = [rego.to_dict() for rego in user_regs]
+            # self.user_regos = UserServices.registration_representer(user_regs)
+
             return rx.redirect("/event-detail")
         else:
             print("ERROR: Event is None when expected not to be.")
@@ -935,6 +947,10 @@ def booked_event_detail():
 def event_detail():
     # event = DashboardState.selected_event
     event = EventInnards.selected_event
+    # balls = EventInnards.user_regos
+    # print("Balls")
+    # print(balls)
+    # print(f"{balls["id"]} {balls["username"]} {balls["event_name"]}")
 
     # perks = EventInnards.get_perks()
     # id = DashboardState.selected_event['id']
@@ -994,11 +1010,11 @@ def event_detail():
         rx.button(
             "Cancel Ticket",
             # on_click=TicketBooking.book_ticket(),
-            on_click=lambda e=event: EventInnards.fetch_and_redirect(event["id"]),
+            on_click=lambda e=event: EventInnards.cancel_ticket(event["id"]),
             # on_click=lambda e=event: TicketBooking.book_ticket(event["id"]),
             # on_click=DashboardState.book_selected
             # _event,
-            color_scheme="green",
+            color_scheme="red",
             size="4"
         ),
 
