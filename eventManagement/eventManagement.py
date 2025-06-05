@@ -1,23 +1,15 @@
-# import datetime
 from datetime import datetime
-
 import reflex as rx
-import sqlalchemy
-
-from eventManagement.models.attendee import Attendee
 from eventManagement.models.event import Event, EventType, EventStatus, Perk
 from eventManagement.models.seed_data import seed_users, seed_perks, seed_all_attendees, seed_all_organisers, \
     seed_all_registrations
 from eventManagement.models.seed_data import disperse_users_into_roles
 from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
-from eventManagement.models.user import User
 from eventManagement.services.eventServices import EventServices
 from eventManagement.services.user_services import UserServices
-from rxconfig import config
-# from eventManagement.models import User, Attendee, Organiser, Event
+
 from fastapi import FastAPI, Depends
-from fastapi.security import OAuth2PasswordBearer
 
 fastapi_app = FastAPI(title="My API")
 
@@ -39,27 +31,7 @@ async def get_users():
 async def get_events():
     from eventManagement.services.eventServices import EventServices
     all_events = EventServices.get_all_events()
-    # load_events = EventServices.LoadEvents()
-    # load_events.load_all_events()
     return all_events
-
-
-# @fastapi_app.get("/api/login_user")
-# async def login_user(username, password):
-#     from eventManagement.services.user_services import UserServices
-#     login_user_def = UserServices.LogInUser
-#     login_user_def.log_in_user()
-#     # load_events = EventServices.LoadEvents()
-#     # load_events.load_all_events()
-#     return login_user_def.good_login_data
-
-
-# @fastapi_app.get("/api/get_event")
-# async def get_event(given_id):
-#     from eventManagement.services.eventServices import EventServices
-#     get_event_def = EventServices.GetEvent()
-#     get_event_def.get_event_by_id()
-#     return get_event_def.event_found
 
 
 @fastapi_app.get("/api/get_event_by_id")
@@ -98,14 +70,6 @@ async def get_attended_events(attendee_id: int):
     # return events
 
 
-# @fastapi_app.get("/api/get_attendee_events_NEW")
-# async def get_attended_events(base_user_id: int):
-#     from eventManagement.services.user_services import UserServices
-#     attendee = UserServices.get_attendee_from_base_user(base_user_id)
-#     return attendee.events
-# return events
-
-
 @fastapi_app.get("/api/get_organised_events")
 async def get_organised_events(base_user_id: int):
     from eventManagement.services.user_services import UserServices
@@ -121,7 +85,7 @@ async def get_event_perks(event_id: int):
     return perks
 
 
-# TODO reject -> accept registrations | Edit event (placeholders not values) | Must make perk to make event
+# TODO Edit event (placeholders not values) | Must make perk to make event
 
 @fastapi_app.get("/api/set_event_name")
 async def get_attended_events(event_id: int, event_name: str):
@@ -155,22 +119,26 @@ async def get_event_by_name(name: str):
 
 
 class AppState(rx.State):
-    """The app state."""
+    """The app state.
+    current_user_id : The id of the user currently logged in
+    selected_user : The current user's details, represented as a dictionary. Dictionaries are
+    used instead of instances of objects as only primitive objects are able to be used in Reflex, and
+    Dictionaries are easier to pass
+    """
     current_user_id: int = -1
     selected_user: dict | None = None
-    # selected_user: User
-    # attendee_from_user: Attendee
-    # current_user: User
     ...
 
     @rx.event
     async def fetch_current_user(self):
+        """
+        get current user object using current_user_id and set returned object as selected_user
+        """
         from eventManagement.services.user_services import UserServices
         if self.current_user_id:
             user = UserServices.get_user_by_id(self.current_user_id)
             if user:
                 self.selected_user = user.to_dict()
-                # self.selected_user = user
 
     @rx.event
     async def get_attendee_from_base_user(self):
@@ -185,85 +153,85 @@ class AppState(rx.State):
     def setUser(self, user_id: int):
         self.current_user_id = user_id
         print(AppState.current_user_id)
-    # if(self.current_user_id != -1):
-    #     self.current_user = UserServices.get_user_by_id(self.current_user_id)
-
-
-# @rx.event
-# def fetch_current_user(self):
-#     from eventManagement.services.user_services import UserServices
-#
-#     if self.current_user_id:
-#         user = UserServices.get_user_by_id(self.current_user_id)
-#         if user:
-#             self.selected_user = user.to_dict()
-
-
-# fastapi_app = FastAPI(title="My API")
-
-
-# Add routes to the FastAPI app
 
 
 class DashboardState(AppState):
+    """
+    the Class used for the dashboard page functions
+    events: list[dict] = [] : The list of all events, stored as dictionaries
+    selected_event: dict | None = None : the currently selected event represented as a dictionary
+    """
     events: list[dict] = []
     selected_event: dict | None = None
 
     @rx.event
     async def load_events(self):
+        """
+        Fetches all events from database and converts them into a list of dictionaries
+        """
         from eventManagement.services.eventServices import EventServices
         events_list = EventServices.get_all_events()
         self.events = [event.to_dict() for event in events_list]
 
-    @rx.event
-    async def fetch_and_redirect(self, event_id: int):
-        from eventManagement.services.eventServices import EventServices
-        event = EventServices.get_event_by_id(event_id)
-        if event:
-            self.selected_event = event.to_dict()
-            return rx.redirect("/event-detail")
-        else:
-            print("ERROR: Event is None when expected not to be.")
+    # @rx.event
+    # async def fetch_and_redirect(self, event_id: int):
+    #     from eventManagement.services.eventServices import EventServices
+    #     event = EventServices.get_event_by_id(event_id)
+    #     if event:
+    #         self.selected_event = event.to_dict()
+    #         return rx.redirect("/event-detail")
+    #     else:
+    #         print("ERROR: Event is None when expected not to be.")
 
 
 class LoginLogic(AppState):
+    """
+    Class responsible for the logic surrounding Logging-in a user
+    form_data : A dictionary that represents the values taken from user-entered inputs
+    """
     form_data: dict = {}
 
     @rx.event
     def handleSubmit(self, formData: dict):
-        print("bacon bacon bacon")
+        """
+        Is called once the user presses 'Log-in'.
+        The values from the inputs called "user_name" and "pass_word" are taken and passed to UserServices function login_user.
+        If both the username and password are correct, the corresponding user instance is returned.
+        If a user is returned, the State variables selected_user and current_user_id are set from
+        the users details, the user is then redirected to their home page.
+
+        If details are incorrect, user remains at the log-in page.
+        """
         username = formData.get("user_name")
         password = formData.get("pass_word")
         print(username + " " + password)
         logged_in_user = UserServices.login_user(username, password)
-        # correctDetails = UserServices.login_user(username, password)
-        # print(correctDetails)
-        # if (correctDetails == True):
         if (logged_in_user):
-            # user = UserServices.get_user_by_username(username)
-            # print(user)
-            # user_id = user.id
             self.selected_user = logged_in_user
-            # setUser(AppState, user_id)
-
             self.current_user_id = logged_in_user.id
-            # self.current_user_id = user_id
-            # AppState.current_user_id = user_id
-            # LoginLogic.father_state.setUser(State, user_id)
-            # rx.session().set("user_id", user.id)
             print(AppState.current_user_id)
             yield rx.redirect("/home")
-            # rx.navigate("/home", user_id=AppState.current_user_id)
-
         print(AppState.current_user_id)
 
 
 class CreateAccount(AppState):
+    """
+    Class responsible for the logic surrounding Creating an account
+    form_data : A dictionary that represents the values taken from user-entered inputs
+    """
     form_data: dict = {}
 
     @rx.event
     def handleSubmit(self, formData: dict):
-        print("bacon bacon bacon")
+        """
+        Is called once "Create Account" is clicked
+        Once clicked, the value of all user-input fields are passed to UserServices.make_base_user()
+        If passed username does not exist in the database, the Create Account details are valid and a new user is created.
+        The created user is then returned and the State Variables current_user_id and selected_user are set
+        from the user details. The user is then re-directed to their home page.
+
+        If details are bad, or already exist in database, user remains at the Create Account page
+        """
         username = formData.get("user_name")
         password = formData.get("pass_word")
         name = formData.get("first_name") + " " + formData.get("last_name")
@@ -273,38 +241,12 @@ class CreateAccount(AppState):
         correctDetails = UserServices.make_base_user(name, email, birth, password, username, phone)
         print(correctDetails)
         if (correctDetails):
-            # if (correctDetails == True):
             print("good made user")
-            # user = UserServices.get_user_by_username(username)
             print(correctDetails)
-            # user_id = co-rrectDetails.id
-            # setUser(AppState, user_id)
             self.current_user_id = correctDetails.id
-            self.selected_user= correctDetails.to_dict()
-
+            self.selected_user = correctDetails.to_dict()
             yield rx.redirect("/home")
-            # LoginLogic.handleSubmit(self,formData)
-        #     user = UserServices.get_user_by_id(username)
-        #     State.user_id = user.id
-        #     print(State.user_id)
-        #
-        # print(State.user_id)
 
-
-# def index() -> rx.Component:
-#     # Index page
-#     return rx.container(
-#         rx.color_mode.button(position="top-right"),
-#         rx.vstack(
-#             rx.heading("Welcome To Zen Planner! Where anyone can organise an Event!", size="9"),
-#             rx.text("Welcome", size="5"),
-#             rx.link(rx.button("Log in", size="4"), href="/dashboard"),
-#             rx.link(rx.button("Create Account", size="4"), href="/dashboard"),
-#             spacing="5",
-#             justify="center",
-#             min_height="85vh",
-#         ),
-#     )
 def index() -> rx.Component:
     return rx.container(
         rx.color_mode.button(position="top-right"),
@@ -431,25 +373,14 @@ class EventInnards(DashboardState):
     user_regos: list[dict] = []
     event_id: int
 
-    # role = "None"
-
-    # events: list[dict] = []
-    # selected_event: dict | None = None
-    #
-    # @rx.event
-    # async def load_events(self):
-    #     from eventManagement.services.eventServices import EventServices
-    #     events_list = EventServices.get_all_events()
-    #     self.events = [event.to_dict() for event in events_list]
-
     @rx.event
-    async def cancel_ticket(self, event_id : int):
+    async def cancel_ticket(self, event_id: int):
         user_registration = UserServices.get_user_registrations_for_event(self.current_user_id, event_id)
         EventServices.remove_registration(user_registration)
         return rx.redirect("/home")
 
     @rx.event
-    async def approve_registration(self, rego_id: int,  event_id : int):
+    async def approve_registration(self, rego_id: int, event_id: int):
         EventServices.approve_registration(rego_id)
 
         regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
@@ -458,9 +389,8 @@ class EventInnards(DashboardState):
         regos_temp_rej = EventServices.get_all_REJECTED_registrations_on_event(event_id)
         self.rejected_regos = UserServices.registration_representer(regos_temp_rej)
 
-
     @rx.event
-    async def reject_registration(self, rego_id: int, event_id : int):
+    async def reject_registration(self, rego_id: int, event_id: int):
         EventServices.reject_registration(rego_id)
 
         regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
@@ -1135,7 +1065,7 @@ def event_detail():
                             rx.button(
                                 "Approve",
                                 # on_click = lambda r=rego: EventServices.approve_registration(r["id"]),
-                                on_click=lambda r=rego: EventInnards.approve_registration(r["id"],event["id"]),
+                                on_click=lambda r=rego: EventInnards.approve_registration(r["id"], event["id"]),
                                 size="2",
                                 color_scheme="green"
                             )
@@ -1160,7 +1090,7 @@ def event_detail():
                             rx.button(
                                 "Reject",
                                 # on_click=lambda r=rego: EventServices.reject_registration(r["id"]),
-                                on_click=lambda r=rego: EventInnards.reject_registration(r["id"],event["id"]),
+                                on_click=lambda r=rego: EventInnards.reject_registration(r["id"], event["id"]),
                                 size="2",
                                 color_scheme="red"
                             )
