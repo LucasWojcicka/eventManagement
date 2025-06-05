@@ -121,6 +121,8 @@ async def get_event_perks(event_id: int):
     return perks
 
 
+# TODO reject -> accept registrations | Edit event (placeholders not values) | Must make perk to make event
+
 @fastapi_app.get("/api/set_event_name")
 async def get_attended_events(event_id: int, event_name: str):
     from eventManagement.services.eventServices import EventServices
@@ -426,8 +428,8 @@ class EventInnards(DashboardState):
     approved_regos: list[dict] = []
     rejected_regos: list[dict] = []
     event_id: int
-    # role = "None"
 
+    # role = "None"
 
     # events: list[dict] = []
     # selected_event: dict | None = None
@@ -437,6 +439,27 @@ class EventInnards(DashboardState):
     #     from eventManagement.services.eventServices import EventServices
     #     events_list = EventServices.get_all_events()
     #     self.events = [event.to_dict() for event in events_list]
+
+    @rx.event
+    async def approve_registration(self, rego_id: int,  event_id : int):
+        EventServices.approve_registration(rego_id)
+
+        regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+        self.approved_regos = UserServices.registration_representer(regos_temp_app)
+
+        regos_temp_rej = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+        self.rejected_regos = UserServices.registration_representer(regos_temp_rej)
+
+
+    @rx.event
+    async def reject_registration(self, rego_id: int, event_id : int):
+        EventServices.reject_registration(rego_id)
+
+        regos_temp_app = EventServices.get_all_APPROVED_registrations_on_event(event_id)
+        self.approved_regos = UserServices.registration_representer(regos_temp_app)
+
+        regos_temp_rej = EventServices.get_all_REJECTED_registrations_on_event(event_id)
+        self.rejected_regos = UserServices.registration_representer(regos_temp_rej)
 
     @rx.event
     async def fetch_and_redirect(self, event_id: int):
@@ -458,8 +481,6 @@ class EventInnards(DashboardState):
             self.selected_event = event.to_dict()
             perks_temp = EventServices.get_event_perks_from_event_id(event_id)
             self.perks = [perk.to_dict() for perk in perks_temp]
-
-
 
             # self.perks = UserServices.registration_representer(perks_temp)
 
@@ -1092,11 +1113,12 @@ def event_detail():
                         rx.vstack(
                             rx.text(f"Registration ID: {rego['id']}"),
                             rx.text(f"Perk: {rego['perk_name']}"),
-                            rx.text(f"Registration: {rego['approved']}"),
+                            rx.text(f"Approved: {rego['approved']}"),
 
                             rx.button(
                                 "Approve",
-                                # on_click=lambda r=rego: EventInnards.toggle_approval(r["id"]),
+                                # on_click = lambda r=rego: EventServices.approve_registration(r["id"]),
+                                on_click=lambda r=rego: EventInnards.approve_registration(r["id"],event["id"]),
                                 size="2",
                                 color_scheme="green"
                             )
@@ -1117,10 +1139,11 @@ def event_detail():
                         rx.vstack(
                             rx.text(f"Registration ID: {rego['id']}"),
                             rx.text(f"Perk: {rego['perk_name']}"),
-                            rx.text(f"Registration: {rego['approved']}"),
+                            rx.text(f"Approved: {rego['approved']}"),
                             rx.button(
                                 "Reject",
-                                # on_click=lambda r=rego: EventInnards.toggle_approval(r["id"]),
+                                # on_click=lambda r=rego: EventServices.reject_registration(r["id"]),
+                                on_click=lambda r=rego: EventInnards.reject_registration(r["id"],event["id"]),
                                 size="2",
                                 color_scheme="red"
                             )
@@ -1135,7 +1158,8 @@ def event_detail():
             ),
             columns="2",
             spacing="6",
-            width="100%"
+            width="100%",
+            on_click=print("yippee!")
         ),
         rx.button(
             "Edit Event",
@@ -1157,6 +1181,11 @@ class OrganiserPortal(AppState):
     # attendeers = list[dict] = []
 
     # attending_events: list[dict] = []
+
+    # TODO edit event and perks
+    # TODO approve / reject registrations
+
+    # TODO optional -> refunds
 
     @rx.event
     async def kill_kill_murder_murder(self):
@@ -1823,7 +1852,7 @@ class UserHomePage(AppState):
         # attendee = UserServices.get_attendee_from_base_user(self.current_user_id)
         # if attendee:
         events = UserServices.get_user_registrations(self.current_user_id)
-        print(UserServices.registration_representer(events))
+        # print(UserServices.registration_representer(events))
         self.attending_events = UserServices.registration_representer(events)
         # registration_rep = UserServices.registration_representer(events)
         # self.attending_events = [registration.to_dict() for registration in registration_rep]

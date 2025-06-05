@@ -170,19 +170,22 @@ class EventServices(rx.State):
             for rego in all_registrations:
                 if rego.approved == True:
                     approved_regos.append(rego)
+                    print(rego.id)
+
             return approved_regos
 
 
 
     @staticmethod
     def get_all_REJECTED_registrations_on_event(event_id: int):
-        print("get ARPPOVED of event")
+        print("get REJECTED of event")
         with rx.session() as session:
             all_registrations = session.exec(Registration.select().where(Registration.event_id == event_id))
             rejected_regos = []
             for rego in all_registrations:
                 if rego.approved == False:
                     rejected_regos.append(rego)
+                    print(rego.id)
             return rejected_regos
     #
     # @staticmethod
@@ -247,6 +250,27 @@ class EventServices(rx.State):
                     count = count+1
             return count
 
+    @staticmethod
+    def approve_registration(rego_id : int):
+        with rx.session() as session:
+            registration = session.exec(Registration.select().where(Registration.id == rego_id)).first()
+            print("APPROVE")
+            print(f"{registration.id} {registration.approved} {registration.user_id}" )
+            registration.approved = True
+            print(f"{registration.id} {registration.approved} {registration.user_id}" )
+            session.commit()
+
+
+
+    @staticmethod
+    def reject_registration(rego_id : int):
+        with rx.session() as session:
+            registration = session.exec(Registration.select().where(Registration.id == rego_id)).first()
+            print("REJECT")
+            print(f"{registration.id} {registration.approved} {registration.user_id}" )
+            registration.approved = False
+            print(f"{registration.id} {registration.approved} {registration.user_id}" )
+            session.commit()
 
     # setters
     # @staticmethod
