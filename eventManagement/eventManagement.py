@@ -280,6 +280,7 @@ class CreateAccount(AppState):
             # user_id = co-rrectDetails.id
             # setUser(AppState, user_id)
             self.current_user_id = correctDetails.id
+            self.selected_user= correctDetails.to_dict()
 
             yield rx.redirect("/home")
             # LoginLogic.handleSubmit(self,formData)

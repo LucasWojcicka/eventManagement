@@ -188,6 +188,10 @@ class UserServices(rx.State):
         with rx.session() as session:
             return session.exec(Attendee.select().where(Attendee.user_id == user_id)).first()
 
+    @staticmethod
+    def get_user_from_username(username : str):
+        with rx.session() as session:
+            return session.exec(User.select().where(User.username == username)).first()
     # setters
     @staticmethod
     def make_base_user(name: str, email: str, dob: datetime, password: str, username: str, phone_number: str):
@@ -215,8 +219,10 @@ class UserServices(rx.State):
                 session.add(new_attendee_from_user)
                 session.add(new_organiser_from_user)
                 session.commit()
+                user = UserServices.get_user_from_username(new_user.username)
                 # return True
-                return new_user
+                # return new_user
+                return user
 
     @staticmethod
     def set_user_name(user_id: int, username: str):
