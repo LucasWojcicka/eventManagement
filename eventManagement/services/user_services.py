@@ -36,15 +36,10 @@ class UserServices(rx.State):
 
     @staticmethod
     def organise_event(user_id: int, event: Event):
-        # print(organiser.id)
         with rx.session() as session:
-            # organiser = UserServices.get_organiser_from_base_user(user_id)
             organiser = session.exec(Organiser.select().where(Organiser.user_id == user_id)).first()
             organiser.events.append(event)
             session.commit()
-            # new = Organisereventlink(user_id=base_user_id)
-            # session.add(organiser)
-        # organiser.events.append(event)
 
     @staticmethod
     def make_organiser(base_user_id: int):
@@ -76,21 +71,6 @@ class UserServices(rx.State):
         with rx.session() as session:
             return session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
 
-    # @staticmethod
-    # def get_attenders(event_id: int):
-    #     print("get attenders of event")
-    #     with rx.session() as session:
-    #         all_attendees = session.exec(Attendee.select()).all()
-    #         matching_attendees = []
-    #
-    #         for attendee in all_attendees:
-    #             for event in attendee.events:
-    #                 if event.id == event_id:
-    #                     matching_attendees.append(attendee)
-    #                     break  # One match is enough
-    #
-    #         print(f"Found {len(matching_attendees)} attenders for event {event_id}")
-    #         return matching_attendees
     @staticmethod
     def get_user_registrations(user_id: int):
         with rx.session() as session:
@@ -171,13 +151,6 @@ class UserServices(rx.State):
             organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
             return session.exec(User.select().where(User.id == organiser.user_id))
 
-    # @staticmethod
-    # def did_organiser_organise_this_event(organiser_id: int,event_id:int):
-    #     with rx.session() as session:
-    #         organiser = session.exec(Organiser.select().where(Organiser.id == organiser_id)).first()
-    #         return session.exec(User.select().where(User.id == organiser.user_id))
-
-    # getters for user
     @staticmethod
     def get_user_by_id(user_id: int) -> User | None:
         with rx.session() as session:

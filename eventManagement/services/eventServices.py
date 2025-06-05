@@ -13,7 +13,6 @@ class EventServices(rx.State):
     def get_all_events():
         with rx.session() as session:
             return session.exec(Event.select()).all()
-        # print("get all events")
 
     @staticmethod
     def get_event_by_id(event_id: int) -> Event | None:
