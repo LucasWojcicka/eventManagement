@@ -22,8 +22,7 @@ def seed_users():
             print(f"already data, pass: {existing_data}")
             session.exec(sqlalchemy.text("DELETE FROM User"))
             session.commit()
-        else:
-            engine = create_engine("sqlite:///reflex.db")
+
         session.commit()
         user = User(name="User User",
                     email="user@mail.com",

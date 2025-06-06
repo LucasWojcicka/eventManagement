@@ -17,6 +17,8 @@ pip install -r requirements.txt
 reflex db init
 reflex db makemigrations
 reflex db migrate
+chmod +x ./eventManagement/seed.sh
+./eventManagement/seed.sh
 reflex run
 ```
 

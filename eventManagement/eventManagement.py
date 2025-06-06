@@ -207,6 +207,7 @@ class LoginLogic(AppState):
         print(username + " " + password)
         logged_in_user = UserServices.login_user(username, password)
         if (logged_in_user):
+            self.reset()
             self.selected_user = logged_in_user
             self.current_user_id = logged_in_user.id
             print(AppState.current_user_id)
@@ -243,6 +244,7 @@ class CreateAccount(AppState):
         if (correctDetails):
             print("good made user")
             print(correctDetails)
+            self.reset()
             self.current_user_id = correctDetails.id
             self.selected_user = correctDetails.to_dict()
             yield rx.redirect("/home")
@@ -528,8 +530,7 @@ class TicketBooking(AppState):
         If all details are filled out, the registration will be made and the user will be redirected to their home page, where they can see thier new registration and its approval status
         """
         print(f"PAY PAY PAY {self.selected_perk} {self.subtotal} {event['name']}")
-        if (
-                self.selected_perk != "" and self.subtotal != 0 and self.cardholder_name != "" and self.cardholder_number != "" and self.expiry != "" and self.cvv != ""):
+        if (self.selected_perk != "" and self.subtotal != 0 and self.cardholder_name != "" and self.cardholder_number != "" and self.expiry != "" and self.cvv != ""):
             EventServices.make_rego(self.subtotal, event['id'], self.current_user_id, self.selected_perk_id)
             return rx.redirect("/home")
 
@@ -974,12 +975,12 @@ def event_detail():
                 width="100%",
                 margin_bottom="6",
             ),
-            rx.button(
-                "Book Event",
-                # on_click=DashboardState.book_selected_event,
-                color_scheme="green",
-                size="4"
-            ),
+            # rx.button(
+            #     "Book Event",
+            #     # on_click=DashboardState.book_selected_event,
+            #     color_scheme="green",
+            #     size="4"
+            # ),
             columns="2",
             spacing="4",
             width="100%",
@@ -1040,17 +1041,16 @@ def event_detail():
             spacing="6",
             width="100%",
         ),
-        rx.button(
-            "Edit Event",
-            on_click=EventInnards.fetch_and_redirect_EDIT_organised_event(event["id"]),
-            color_scheme="blue",
-            size="4"
-        ),
+        # rx.button(
+        #     "Edit Event",
+        #     on_click=EventInnards.fetch_and_redirect_EDIT_organised_event(event["id"]),
+        #     color_scheme="blue",
+        #     size="4"
+        # ),
 
             padding="5",
             spacing="5",
         ),
-
 
 class OrganiserPortal(AppState):
     """
@@ -1193,7 +1193,6 @@ class EditEvent(AppState):
         else:
             self.perks = []
 
-    # TODO fix documentation V or add feature
     @rx.event
     async def make_event(self, formData: dict):
         """
@@ -1725,7 +1724,7 @@ def user_home_page():
                     spacing="4",
                     padding_top="4",
                 ),
-                rx.text("Not attending any events.")
+                # rx.text("Not attending any events.")
             ),
             rx.button(
                 "Browse Events",
@@ -1926,13 +1925,3 @@ app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
 app.add_page(pureTesting(), route="/testing")
-
-# seed_users()
-# disperse_users_into_roles()
-# seed_events()
-# seed_one_attendee()
-# seed_all_attendees()
-# seed_all_organisers()
-# seed_perks()
-# seed_all_registrations()
-
