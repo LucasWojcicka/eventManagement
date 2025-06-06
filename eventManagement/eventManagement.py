@@ -266,11 +266,10 @@ def index() -> rx.Component:
                     rx.dialog.trigger(rx.button("Login", size="4")),
                     loginDialog()
                 ),
-                spacing="5",
-                justify="center",
-                min_height="85vh",
             ),
-
+            spacing="5",
+            justify="center",
+            min_height="85vh",
         ),
         background="center/cover url('/bg.png')",
     )
@@ -1051,7 +1050,6 @@ def event_detail():
             padding="5",
             spacing="5",
         ),
-    )
 
 
 class OrganiserPortal(AppState):
@@ -1080,58 +1078,62 @@ def user_home_page():
     """
     AppState.fetch_current_user()
     return rx.container(
-        home_header(),
-        rx.card(
-            rx.vstack(
-                rx.heading(f"Welcome {AppState.selected_user['name']}!"),
-                rx.text(f"Email: {AppState.selected_user['email']}"),
-                rx.text(f"Username: {AppState.selected_user['username']}"),
-                rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
-                align="start",
-                spacing="2",
-            ),
-            shadow="md",
-            padding="4",
-            border_radius="5xl",
-        ),
+        rx.vstack(
+            home_header(),
+            # rx.card(
+            #     rx.vstack(
+            #         rx.heading(f"Welcome {AppState.selected_user['name']}!"),
+            #         rx.text(f"Email: {AppState.selected_user['email']}"),
+            #         rx.text(f"Username: {AppState.selected_user['username']}"),
+            #         rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
+            #         align="start",
+            #         spacing="2",
+            #     ),
+            #     shadow="md",
+            #     padding="4",
+            #     border_radius="5xl",
+            # ),
 
-        rx.cond(
-            OrganiserPortal.organised_events,
-            rx.vstack(
-                rx.heading("Your Organised Events", size="4", padding_bottom="2"),
-                rx.grid(
-                    rx.foreach(
-                        OrganiserPortal.organised_events,
-                        lambda event: rx.card(
-                            rx.vstack(
-                                rx.text(event["name"], font_weight="bold"),
-                                rx.text(event["event_type"]),
-                                rx.text(event["location"]),
-                                rx.text(event["date"]),
-                            ),
-                            height="25vh",
-                            on_click=lambda e=event: EventInnards.fetch_and_redirect_organised_event(event["id"])
-                        )
+            rx.cond(
+                OrganiserPortal.organised_events,
+                rx.vstack(
+                    rx.heading("Your Organised Events", size="4", padding_bottom="2"),
+                    rx.grid(
+                        rx.foreach(
+                            OrganiserPortal.organised_events,
+                            lambda event: rx.card(
+                                rx.vstack(
+                                    rx.text(event["name"], font_weight="bold"),
+                                    rx.text(event["event_type"]),
+                                    rx.text(event["location"]),
+                                    rx.text(event["date"]),
+                                ),
+                                height="25vh",
+                                on_click=lambda e=event: EventInnards.fetch_and_redirect_organised_event(event["id"])
+                            )
+                        ),
+                        columns="2",
+                        spacing="4",
+                        width="100%",
                     ),
-                    columns="2",
+                    align="start",
                     spacing="4",
-                    width="100%",
+                    padding_top="4",
                 ),
-                align="start",
-                spacing="4",
-                padding_top="4",
+                rx.text("No organised events.")
             ),
-            rx.text("No organised events.")
-        ),
 
-        rx.button(
-            "Create New Event",
-            on_click=rx.redirect("/create-event"),
-            color_scheme="blue",
-            size="3",
-            margin_top="4"
-        )
-    )
+            rx.button(
+                "Create New Event",
+                on_click=rx.redirect("/create-event"),
+                color_scheme="blue",
+                size="3",
+                margin_top="4"
+            ),
+        padding_top="10",
+        padding_bottom="10"
+        ),
+    ),
 
 class EditEvent(AppState):
     """
@@ -1583,7 +1585,7 @@ def create_event():
     """
     The UI for creating an event. Here the user can make an event and its perks.
     """
-    return rx.center(
+    return rx.container(
         rx.vstack(
             rx.heading("Create New Event!"),
             rx.card(
@@ -1639,8 +1641,11 @@ def create_event():
                 columns="3",
                 spacing="4",
             ),
-            width="80%"
-        )
+            width="80%",
+            padding_top="10",
+            padding_bottom="10",
+        ),
+        align="center",
     )
 
 
@@ -1808,7 +1813,7 @@ def home_header() -> rx.Component:
                     navbar_link("Home", "/home"),
                     navbar_link("My Registrations", "/attendee_registrations"),
                     navbar_link("My Events", "/attendee_events"),
-                    #navbar_link("Organiser Portal", "/organiser_portal"),
+                    navbar_link("Organiser Portal", "/organiser_portal"),
                     spacing="4",
                     align_items="center",
                     justify="center"
@@ -1922,12 +1927,12 @@ app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
 app.add_page(pureTesting(), route="/testing")
 
-seed_users()
-disperse_users_into_roles()
-seed_events()
-seed_one_attendee()
-seed_all_attendees()
-seed_all_organisers()
-seed_perks()
-seed_all_registrations()
+# seed_users()
+# disperse_users_into_roles()
+# seed_events()
+# seed_one_attendee()
+# seed_all_attendees()
+# seed_all_organisers()
+# seed_perks()
+# seed_all_registrations()
 
