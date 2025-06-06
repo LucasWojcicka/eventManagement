@@ -8,7 +8,6 @@ from eventManagement.models.seed_data import seed_events
 from eventManagement.models.seed_data import seed_one_attendee
 from eventManagement.services.eventServices import EventServices
 from eventManagement.services.user_services import UserServices
-
 from fastapi import FastAPI, Depends
 
 fastapi_app = FastAPI(title="My API")
@@ -252,7 +251,7 @@ class CreateAccount(AppState):
 
 def index() -> rx.Component:
     """
-    UI component for login/ create account page
+    UI component for login/ create account page index being the default page
     """
     return rx.container(
         rx.color_mode.button(position="top-right"),
@@ -281,6 +280,8 @@ logged_in = False
 
 
 def login_logic():
+    """ Logic for logging in so that it can be called modularly, 
+    dialog being the popup overlay """
     if logged_in == False:
         return rx.hstack(
             rx.dialog.root(
@@ -296,14 +297,8 @@ def login_logic():
         return rx.avatar(src="/logo.jpg", fallback="LW", size="3"),
 
 
-def aboutUs():
-    return rx.container(
-        header(),
-        rx.text("about us", size="5"),
-    )
-
-
 def pureTesting():
+    """ Testing page for debugging """
     return rx.container(
         header(),
         rx.text("pure testing", size="5"),
@@ -1080,20 +1075,6 @@ def user_home_page():
     return rx.container(
         rx.vstack(
             home_header(),
-            # rx.card(
-            #     rx.vstack(
-            #         rx.heading(f"Welcome {AppState.selected_user['name']}!"),
-            #         rx.text(f"Email: {AppState.selected_user['email']}"),
-            #         rx.text(f"Username: {AppState.selected_user['username']}"),
-            #         rx.text(f"Phone number: {AppState.selected_user['phone_number']}"),
-            #         align="start",
-            #         spacing="2",
-            #     ),
-            #     shadow="md",
-            #     padding="4",
-            #     border_radius="5xl",
-            # ),
-
             rx.cond(
                 OrganiserPortal.organised_events,
                 rx.vstack(
@@ -1247,6 +1228,8 @@ class EditEvent(AppState):
 
 
 def editPerkPopover():
+    """ When creating an event you can add multiple
+        perks with this popover """
     return rx.dialog.content(
         rx.dialog.title("New Perk"),
         rx.container(
@@ -1328,7 +1311,6 @@ def editPerkPopover():
             rx.button("Close", size="3"),
         ),
     ),
-
 
 @rx.page(route="/edit-event", on_load=EditEvent.on_load_for_edit())
 def edit_event():
@@ -1512,7 +1494,7 @@ class CreateEvent(AppState):
 
 def perkPopover():
     """
-    The creat perk popover that appears when the user clicks the 'make perk' button
+    The create perk popover that appears when the user clicks the 'make perk' button
     """
     return rx.dialog.content(
         rx.dialog.title("New Perk"),
@@ -1737,7 +1719,9 @@ def user_home_page():
     )
 
 def navbar_link(text: str, url: str) -> rx.Component:
-    """The UI component for the navigation header"""
+    """
+    The UI component for the navigation header
+    """
     return rx.link(
         rx.text(text, size="4", weight="medium"), href=url
     )
@@ -1745,7 +1729,7 @@ def navbar_link(text: str, url: str) -> rx.Component:
 
 def header() -> rx.Component:
     """
-    The ui component for the header
+    The UI component for the header
     """
     return rx.box(
         rx.color_mode.button(position="top-right"),
@@ -1831,6 +1815,10 @@ def home_header() -> rx.Component:
 
 
 def loginDialog():
+    """
+    Dialog popover that appears when logging in,
+    passed through 'handle_submit'
+    """
     return rx.dialog.content(
         rx.dialog.title("Login"),
         rx.container(
@@ -1861,6 +1849,10 @@ def loginDialog():
 
 
 def createAccountDialog():
+    """
+    Dialog popover that appears when creating an account,
+    passed through 'handle_submit'
+    """
     return rx.dialog.content(
         rx.dialog.title("Create Account"),
         rx.container(
@@ -1923,5 +1915,4 @@ app.add_all_routes_endpoint()
 
 app.add_page(index)
 app.add_page(dashboard, route="/dashboard")
-app.add_page(aboutUs, route="/about")
 app.add_page(pureTesting(), route="/testing")
