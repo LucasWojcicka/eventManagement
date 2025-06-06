@@ -367,7 +367,8 @@ def dashboard():
     DashboardState.load_events()
 
     return rx.container(
-        header(),
+        home_header(),
+        rx.heading("Events", size="8", padding_top="20px", padding_bottom="20px"),
         rx.container(
             rx.grid(
                 rx.foreach(
@@ -391,7 +392,7 @@ def dashboard():
                 columns="3",
                 spacing="4",
                 width="100%",
-            )
+            ),
         ),
     )
 
@@ -879,7 +880,7 @@ def home_header() -> rx.Component:
                     navbar_link("Home", "/home"),
                     navbar_link("My Registrations", "/attendee_registrations"),
                     navbar_link("My Events", "/attendee_events"),
-                    navbar_link("Organiser Portal", "/organiser_portal"),
+                    #navbar_link("Organiser Portal", "/organiser_portal"),
                     spacing="4",
                     align_items="center",
                     justify="center"
