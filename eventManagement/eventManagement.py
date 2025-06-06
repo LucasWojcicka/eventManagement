@@ -1898,12 +1898,15 @@ app.add_page(dashboard, route="/dashboard")
 app.add_page(aboutUs, route="/about")
 app.add_page(pureTesting(), route="/testing")
 
-seed_users()
-disperse_users_into_roles()
-seed_events()
-seed_one_attendee()
-seed_all_attendees()
-seed_all_organisers()
-seed_perks()
-seed_all_registrations()
+# Moved into separate file
+# seed_users()
+# disperse_users_into_roles()
+# seed_events()
+# seed_one_attendee()
+# seed_all_attendees()
+# seed_all_organisers()
+# seed_perks()
+# seed_all_registrations()
+
+
 
