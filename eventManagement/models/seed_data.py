@@ -1,22 +1,19 @@
 from datetime import datetime
-import random
-
 import reflex as rx
 import sqlalchemy
 from sqlalchemy import create_engine
-from sqlalchemy import text
-from sqlmodel import Session
 from faker import Faker
-
+import random
 from eventManagement.models.user import User
-from eventManagement.models.event import Event, EventType, EventStatus, Perk
+from eventManagement.models.event import Event, EventType, EventStatus, Perk, Registration
 from eventManagement.models.attendee import Attendee
 from eventManagement.models.organiser import Organiser
 
 
-
-
 def seed_users():
+    """
+    creates 50 Fake users using Faker() for data.
+    """
     fake = Faker()
     print("seed users")
     with rx.session() as session:
@@ -24,14 +21,9 @@ def seed_users():
         if existing_data:
             print(f"already data, pass: {existing_data}")
             session.exec(sqlalchemy.text("DELETE FROM User"))
-            # session.exec(sqlalchemy.text("VACUUM"))
             session.commit()
-            # return
         else:
             engine = create_engine("sqlite:///reflex.db")
-
-        # session.exec(sqlalchemy.text("DELETE FROM User"))
-        # session.exec(sqlalchemy.text("VACUUM"))
         session.commit()
         user = User(name="User User",
                     email="user@mail.com",
@@ -43,8 +35,6 @@ def seed_users():
         print(user)
         session.commit()
         for x in range(49):
-            # print(x)
-
             first_name = fake.first_name()
             last_name = fake.last_name()
             test_user = User(name=first_name + " " + last_name,
@@ -60,6 +50,9 @@ def seed_users():
 
 
 def disperse_users_into_roles():
+    """
+    assigns created users into roles of Attendee, Organiser or both
+    """
     print("$*(#^$*(#$^@#*$^@#$(@#^$*@(#^$@#^$*(^%$Y(*@#$^#@$(^")
     print("attendee or organiser")
     print("ratio of : just attendeee, just organiser, or both")
@@ -68,7 +61,6 @@ def disperse_users_into_roles():
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Attendee"))
         session.exec(sqlalchemy.text("DELETE FROM Organiser"))
-        # session.exec(sqlalchemy.text("VACUUM"))
         session.commit()
         users = session.query(User).all()
         for i, user in enumerate(users):
@@ -93,7 +85,9 @@ def disperse_users_into_roles():
 
 
 def get_random_event_type():
-    print("Bacon bacon bacon")
+    """
+    gets a random event type from EventType enumeration for sample event creation
+    """
     print(len(EventType.list()))
     event_type_list = EventType.list()
     max = len(EventType.list())
@@ -103,7 +97,9 @@ def get_random_event_type():
 
 
 def get_random_event_status():
-    print("Bacon bacon bacon")
+    """
+    gets a random status type from EventType enumeration for sample event creation
+    """
     print(len(EventType.list()))
     event_status_list = EventStatus.list()
     max = len(EventStatus.list())
@@ -113,6 +109,9 @@ def get_random_event_status():
 
 
 def fake_convention_venue():
+    """
+    creates a fake convention venue for sample event creation
+    """
     fake = Faker()
     venue_suffixes = ["Convention Center", "Expo Hall", "Event Pavilion", "Auditorium", "Arena", "Dome",
                       "Exhibition Centre", "Convention Ground", "Meeting Ground", "Hall"]
@@ -128,6 +127,9 @@ def fake_convention_venue():
 
 
 def seed_events():
+    """
+    create sample events using Faker() for fake data
+    """
     print("events")
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Event"))
@@ -182,45 +184,11 @@ def seed_one_attendee():
         session.commit()
 
 
-# def seed_all_attendees():
-#     with rx.session() as session:
-#         session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
-#         session.commit()
-#         all_attendees = session.exec(Attendee.select()).all()
-#         all_events = session.exec(Event.select()).all()
-#
-#         for attendee in all_attendees:
-#             num_events = random.randint(1, 5)
-#
-#             events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
-#
-#             for event in events_to_add:
-#                 attendee.events.append(event)
-#
-#         session.commit()
-#
-#
-# def seed_all_organisers():
-#     with rx.session() as session:
-#         session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))
-#         session.commit()
-#         all_organiser = session.exec(Organiser.select()).all()
-#         all_events = session.exec(Event.select()).all()
-#
-#         for organiser in all_organiser:
-#             num_events = random.randint(0, 3)
-#
-#             events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
-#
-#             for event in events_to_add:
-#                 organiser.events.append(event)
-#
-#         session.commit()
-
-import random
-
 
 def seed_all_attendees():
+    """
+    create sample attendees from user pool
+    """
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Attendeeeventlink"))
         session.commit()
@@ -239,7 +207,68 @@ def seed_all_attendees():
         session.commit()
 
 
+def seed_all_registrations():
+    """
+    create sample registrations from Attendee pool
+    """
+    with rx.session() as session:
+        fake = Faker()
+        session.exec(sqlalchemy.text("DELETE FROM registration"))
+        session.commit()
+
+        all_attendees = session.exec(Attendee.select()).all()
+        for attendee in all_attendees:
+            for event in attendee.events:
+                base_user = session.exec(
+                    User.select().where(User.id == attendee.user_id)
+                ).first()
+
+                current_event = session.exec(
+                    Event.select().where(Event.id == event.id)
+                ).first()
+                if not current_event:
+                    continue
+
+                event_perks = session.exec(
+                    Perk.select().where(Perk.event_id == current_event.id)
+                ).all()
+                if not event_perks:
+                    continue
+
+                random_perk = random.choice(event_perks)
+
+                latest_possible = current_event.date
+                registration_date = fake.date_time_between(
+                    start_date="-1y", end_date=latest_possible
+                )
+
+                is_approved = random.choice([True, False])
+                approved_date = (
+                    fake.date_time_between(
+                        start_date=registration_date,
+                        end_date=latest_possible
+                    ) if is_approved else None
+                )
+
+                new_registration = Registration(
+                    price=random_perk.price,
+                    approved=is_approved,
+                    event_id=current_event.id,
+                    user_id=base_user.id,
+                    perk_id=random_perk.id,
+                    registration_date=registration_date,
+                    approved_date=approved_date,
+                )
+
+                session.add(new_registration)
+
+        session.commit()
+
 def seed_all_organisers():
+    """
+    create sample organisers from user pool
+    """
+    import random
     with rx.session() as session:
         session.exec(sqlalchemy.text("DELETE FROM Organisereventlink"))
         session.commit()
@@ -247,18 +276,18 @@ def seed_all_organisers():
         all_organisers = session.exec(Organiser.select()).all()
         all_events = session.exec(Event.select()).all()
 
-        for organiser in all_organisers:
-            if random.random() < 0.7:
-                num_events = random.randint(1, 3)
-                events_to_add = random.sample(all_events, k=min(num_events, len(all_events)))
-
-                for event in events_to_add:
-                    organiser.events.append(event)
+        for event in all_events:
+            if all_organisers:
+                organiser = random.choice(all_organisers)
+                organiser.events.append(event)
 
         session.commit()
 
 
 def seed_perks():
+    """
+    create sample perks for sample events
+    """
     with rx.session() as session:
         fake = Faker()
         events = session.query(Event).all()
@@ -275,7 +304,3 @@ def seed_perks():
                 )
                 session.add(new_perk)
         session.commit()
-
-
-def seed_registrations():
-    print("bacon bacon bacon")
